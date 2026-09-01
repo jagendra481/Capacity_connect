@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import GoogleLoginButton from '../../components/auth/GoogleLoginButton';
 import { getDashboardRoute } from '../../utils/roleUtils';
 import { Lock, Mail, Award, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
 
 export const Login = () => {
-  const { login } = useAuth();
+  const { login, googleLogin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -26,6 +27,21 @@ export const Login = () => {
       navigate(destination, { replace: true });
     } catch (err) {
       setError(err || 'Failed to login. Please check your credentials.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (googlePayload) => {
+    setError('');
+    setLoading(true);
+    try {
+      const res = await googleLogin(googlePayload);
+      const role = res.data.user.role;
+      const destination = location.state?.from?.pathname || getDashboardRoute(role);
+      navigate(destination, { replace: true });
+    } catch (err) {
+      setError(err || 'Google login failed');
     } finally {
       setLoading(false);
     }
@@ -69,6 +85,19 @@ export const Login = () => {
             <span>{error}</span>
           </div>
         )}
+
+        {/* Google Authentication */}
+        <div className="mb-6">
+          <GoogleLoginButton onGoogleSuccess={handleGoogleSuccess} label="Continue with Google" />
+          <div className="relative my-6 text-center">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-800" />
+            </div>
+            <span className="relative px-3 bg-slate-900 text-[11px] font-semibold uppercase text-slate-500 tracking-wider">
+              Or sign in with email
+            </span>
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

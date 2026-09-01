@@ -30,6 +30,15 @@ const login = async (req, res, next) => {
   }
 };
 
+const googleAuth = async (req, res, next) => {
+  try {
+    const data = await authService.googleAuth(req.body);
+    return response.success(res, data, 'Google authentication successful', 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
 const me = async (req, res, next) => {
   try {
     const data = await authService.getCurrentUser(req.user.id);
@@ -66,6 +75,7 @@ const resetPassword = async (req, res, next) => {
 module.exports = {
   register,
   login,
+  googleAuth,
   me,
   forgotPassword,
   resetPassword,

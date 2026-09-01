@@ -12,4 +12,5 @@ module.exports = {
   databaseUrl: process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/capacity_connect',
   aiProvider: process.env.AI_PROVIDER || 'mock',
   aiApiKey: process.env.AI_API_KEY || '',
+  googleClientId: process.env.GOOGLE_CLIENT_ID || '',
 };

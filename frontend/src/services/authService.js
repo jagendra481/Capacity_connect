@@ -19,6 +19,15 @@ export const authService = {
     return res;
   },
 
+  googleAuth: async (googleData) => {
+    const res = await api.post('/auth/google', googleData);
+    if (res.data?.token) {
+      localStorage.setItem('capacity_connect_token', res.data.token);
+      localStorage.setItem('capacity_connect_user', JSON.stringify(res.data.user));
+    }
+    return res;
+  },
+
   getCurrentUser: async () => {
     return api.get('/auth/me');
   },
