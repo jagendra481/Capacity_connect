@@ -1,41 +1,66 @@
-import React from 'react';
-import { ArrowRight, Sparkles, Activity, ShieldCheck, Award, BookOpen, BrainCircuit, TrendingUp, Users } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { ArrowRight, Sparkles, Target, BookOpen, TrendingUp, Award, Layers } from 'lucide-react';
 import Button from '../common/Button';
 
 export const HeroSection = () => {
+  const containerRef = useRef(null);
+  const [transform, setTransform] = useState({ rotateX: 0, rotateY: 0, scale: 1 });
+
+  // Mouse Parallax Effect for 3D Capability Core
+  const handleMouseMove = (e) => {
+    if (!containerRef.current || window.innerWidth < 768) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5; // -0.5 to 0.5
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+
+    setTransform({
+      rotateX: -y * 18, // Max 9 deg tilt
+      rotateY: x * 18,
+      scale: 1.02,
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setTransform({ rotateX: 0, rotateY: 0, scale: 1 });
+  };
+
   return (
-    <section id="home" className="relative min-h-[calc(100vh-80px)] flex items-center py-16 md:py-24 overflow-hidden bg-slate-950">
-      {/* Background Decorative Ambient Glows */}
-      <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-cyan-500/15 blur-[140px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 translate-x-1/3 translate-y-1/3 w-[450px] h-[450px] bg-teal-500/10 blur-[130px] rounded-full pointer-events-none" />
-      <div className="absolute top-10 right-10 w-72 h-72 bg-brand-600/10 blur-[100px] rounded-full pointer-events-none" />
+    <section
+      id="home"
+      ref={containerRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      className="relative min-h-[calc(100vh-80px)] flex items-center py-16 lg:py-24 overflow-hidden bg-slate-950 text-slate-100"
+    >
+      {/* Subtle Restrained Ambient Glow */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-cyan-500/5 blur-[160px] rounded-full pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
           
-          {/* Left Side: Hero Text & Call to Actions */}
+          {/* Left Column: Typography & CTAs (60% width) */}
           <div className="lg:col-span-7 space-y-6 text-left">
             
-            {/* Top Badge */}
-            <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 text-xs font-semibold backdrop-blur-md shadow-sm">
-              <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+            {/* Subtle Platform Tag */}
+            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-300">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
               <span>Digital Capacity Building Platform</span>
             </div>
 
-            {/* Main Heading */}
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-[1.15]">
+            {/* Main Heading — Highlight ONLY "Capacity" */}
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-100 tracking-tight leading-[1.12]">
               Assess. Learn. Improve.{' '}
-              <span className="block mt-2 bg-gradient-to-r from-cyan-400 via-teal-300 to-emerald-400 bg-clip-text text-transparent">
-                Build Organizational Capacity.
+              <span className="block mt-2 font-black text-white">
+                Build Organizational <span className="text-cyan-400 relative inline-block">Capacity</span>.
               </span>
             </h1>
 
-            {/* Subtitle / Description */}
-            <p className="text-base sm:text-lg text-slate-300 max-w-2xl font-normal leading-relaxed">
+            {/* Short Restrained Description */}
+            <p className="text-base sm:text-lg text-slate-300 max-w-xl font-normal leading-relaxed">
               Capacity Connect is an intelligent digital platform that helps organizations identify skill gaps, deliver personalized learning, and build a future-ready workforce.
             </p>
 
-            {/* CTA Buttons */}
+            {/* Buttons */}
             <div className="pt-2 flex flex-wrap items-center gap-4">
               <Button to="/signup" variant="primary" size="lg" icon={ArrowRight}>
                 Get Started
@@ -45,139 +70,118 @@ export const HeroSection = () => {
               </Button>
             </div>
 
-            {/* Micro Trust Indicators */}
-            <div className="pt-8 border-t border-slate-800/80 grid grid-cols-3 gap-4 text-slate-400 max-w-lg">
-              <div className="space-y-1">
-                <p className="text-xl sm:text-2xl font-extrabold text-slate-100">99.4%</p>
-                <p className="text-xs text-slate-400">Skill Precision</p>
+            {/* Minimal Metrics Bar */}
+            <div className="pt-8 border-t border-slate-800/60 grid grid-cols-3 gap-6 max-w-md text-slate-400">
+              <div>
+                <p className="text-2xl font-bold text-slate-100">99.4%</p>
+                <p className="text-xs text-slate-400 mt-0.5">Skill Precision</p>
               </div>
-              <div className="space-y-1">
-                <p className="text-xl sm:text-2xl font-extrabold text-cyan-400">6 Dimensions</p>
-                <p className="text-xs text-slate-400">Capacity Radar</p>
+              <div>
+                <p className="text-2xl font-bold text-cyan-400">6 Core</p>
+                <p className="text-xs text-slate-400 mt-0.5">Radar Dimensions</p>
               </div>
-              <div className="space-y-1">
-                <p className="text-xl sm:text-2xl font-extrabold text-emerald-400">100%</p>
-                <p className="text-xs text-slate-400">Verifiable Certs</p>
+              <div>
+                <p className="text-2xl font-bold text-slate-100">100%</p>
+                <p className="text-xs text-slate-400 mt-0.5">Verifiable Certs</p>
               </div>
             </div>
 
           </div>
 
-          {/* Right Side: Enterprise Dashboard SaaS Illustration Mockup */}
-          <div className="lg:col-span-5 relative">
-            <div className="relative mx-auto max-w-md lg:max-w-none">
-              
-              {/* Outer Glowing Border Frame */}
-              <div className="relative rounded-3xl bg-slate-900/90 border border-slate-800 p-5 sm:p-6 shadow-2xl backdrop-blur-xl space-y-5 hover:border-cyan-500/40 transition-all duration-500">
-                
-                {/* Header Mockup Bar */}
-                <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-                  <div className="flex items-center space-x-2.5">
-                    <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                    <div className="w-3 h-3 rounded-full bg-amber-500/80" />
-                    <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
-                    <span className="text-xs font-mono text-slate-400 ml-2">Capacity Radar Console</span>
-                  </div>
-                  <span className="px-2.5 py-0.5 text-[10px] font-extrabold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full flex items-center space-x-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                    <span>Live Metrics</span>
-                  </span>
-                </div>
+          {/* Right Column: 3D Capability Core Visual (40% width) */}
+          <div className="lg:col-span-5 flex justify-center items-center relative">
+            <div
+              style={{
+                perspective: '1000px',
+              }}
+              className="w-full max-w-sm sm:max-w-md py-6"
+            >
+              <div
+                style={{
+                  transform: `rotateX(${transform.rotateX}deg) rotateY(${transform.rotateY}deg) scale(${transform.scale})`,
+                  transformStyle: 'preserve-3d',
+                  transition: 'transform 0.15s ease-out',
+                }}
+                className="relative w-72 h-72 sm:w-80 sm:h-80 mx-auto flex items-center justify-center"
+              >
+                {/* 3D Outer Orbit Rings */}
+                <div
+                  style={{ transform: 'translateZ(-40px) rotateX(65deg)' }}
+                  className="absolute inset-0 border border-cyan-500/20 rounded-full animate-[spin_25s_linear_infinite] pointer-events-none"
+                />
+                <div
+                  style={{ transform: 'translateZ(-20px) rotateY(55deg)' }}
+                  className="absolute inset-2 border border-slate-700/50 rounded-full animate-[spin_35s_linear_infinite_reverse] pointer-events-none"
+                />
 
-                {/* Top Stat Row */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-2xl space-y-1">
-                    <div className="flex items-center justify-between text-slate-400">
-                      <span className="text-[11px] font-semibold uppercase">Org Readiness</span>
-                      <Activity className="w-4 h-4 text-cyan-400" />
-                    </div>
-                    <p className="text-2xl font-extrabold text-cyan-400">84.2 / 100</p>
-                    <p className="text-[10px] text-emerald-400 font-medium">+14.2% YoY Improvement</p>
-                  </div>
-
-                  <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-2xl space-y-1">
-                    <div className="flex items-center justify-between text-slate-400">
-                      <span className="text-[11px] font-semibold uppercase">Active Trainees</span>
-                      <Users className="w-4 h-4 text-teal-400" />
-                    </div>
-                    <p className="text-2xl font-extrabold text-slate-100">1,248</p>
-                    <p className="text-[10px] text-slate-400 font-medium">across 12 Departments</p>
+                {/* Central Translucent 3D Capability Sphere */}
+                <div
+                  style={{ transform: 'translateZ(0px)' }}
+                  className="w-40 h-40 rounded-full bg-gradient-to-tr from-slate-900 via-slate-900 to-slate-800 border border-cyan-500/40 shadow-2xl shadow-cyan-500/10 flex items-center justify-center relative overflow-hidden backdrop-blur-md"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/10 via-transparent to-teal-400/10" />
+                  <div className="w-20 h-20 rounded-full bg-slate-950 border border-slate-800 flex items-center justify-center shadow-inner">
+                    <Layers className="w-9 h-9 text-cyan-400" />
                   </div>
                 </div>
 
-                {/* Competency Gap Progress Bars */}
-                <div className="p-4 bg-slate-950/70 border border-slate-800/90 rounded-2xl space-y-3.5">
-                  <div className="flex items-center justify-between text-xs font-bold text-slate-200">
-                    <span className="flex items-center space-x-1.5">
-                      <TrendingUp className="w-3.5 h-3.5 text-cyan-400" />
-                      <span>Skill Benchmark Progress</span>
-                    </span>
-                    <span className="text-cyan-400">Target Met</span>
+                {/* Floating 3D Node Card 1: Skills */}
+                <div
+                  style={{ transform: 'translate3d(-90px, -70px, 45px)' }}
+                  className="absolute p-3 bg-slate-900/90 border border-slate-800 rounded-xl shadow-xl backdrop-blur-md flex items-center space-x-2.5"
+                >
+                  <div className="p-1.5 bg-cyan-500/10 rounded-lg text-cyan-400 border border-cyan-500/20">
+                    <Target className="w-4 h-4" />
                   </div>
-
-                  {/* Bar 1 */}
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-[11px]">
-                      <span className="text-slate-300 font-medium">Full-Stack & Cloud Architecture</span>
-                      <span className="text-slate-200 font-bold">88%</span>
-                    </div>
-                    <div className="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-slate-800">
-                      <div className="bg-gradient-to-r from-cyan-500 to-teal-400 h-full rounded-full w-[88%]" />
-                    </div>
-                  </div>
-
-                  {/* Bar 2 */}
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-[11px]">
-                      <span className="text-slate-300 font-medium">AI & Automated Workflows</span>
-                      <span className="text-slate-200 font-bold">92%</span>
-                    </div>
-                    <div className="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-slate-800">
-                      <div className="bg-gradient-to-r from-teal-400 to-emerald-400 h-full rounded-full w-[92%]" />
-                    </div>
-                  </div>
-
-                  {/* Bar 3 */}
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-[11px]">
-                      <span className="text-slate-300 font-medium">Cyber Security Compliance</span>
-                      <span className="text-slate-200 font-bold">74%</span>
-                    </div>
-                    <div className="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-slate-800">
-                      <div className="bg-gradient-to-r from-amber-500 to-cyan-500 h-full rounded-full w-[74%]" />
-                    </div>
+                  <div>
+                    <p className="text-[11px] font-bold text-slate-100">Skills</p>
+                    <p className="text-[9px] text-slate-400">Precision Analysis</p>
                   </div>
                 </div>
 
-                {/* AI Recommendation Alert Chip */}
-                <div className="p-3 bg-gradient-to-r from-cyan-950/60 to-slate-900 border border-cyan-500/30 rounded-2xl flex items-start space-x-3 text-left">
-                  <div className="p-2 bg-cyan-500/20 rounded-xl text-cyan-300 border border-cyan-500/40 flex-shrink-0 mt-0.5">
-                    <BrainCircuit className="w-4 h-4" />
+                {/* Floating 3D Node Card 2: Learning */}
+                <div
+                  style={{ transform: 'translate3d(90px, -40px, 35px)' }}
+                  className="absolute p-3 bg-slate-900/90 border border-slate-800 rounded-xl shadow-xl backdrop-blur-md flex items-center space-x-2.5"
+                >
+                  <div className="p-1.5 bg-teal-500/10 rounded-lg text-teal-400 border border-teal-500/20">
+                    <BookOpen className="w-4 h-4" />
                   </div>
-                  <div className="space-y-0.5">
-                    <p className="text-xs font-bold text-slate-100 flex items-center space-x-1">
-                      <span>AI Recommendation Engine</span>
-                    </p>
-                    <p className="text-[11px] text-slate-300">
-                      Auto-enrolled 42 engineers into "Micro-Frontend & Distributed State" to close critical skill gap.
-                    </p>
+                  <div>
+                    <p className="text-[11px] font-bold text-slate-100">Learning</p>
+                    <p className="text-[9px] text-slate-400">Adaptive Paths</p>
+                  </div>
+                </div>
+
+                {/* Floating 3D Node Card 3: Progress */}
+                <div
+                  style={{ transform: 'translate3d(-80px, 80px, 40px)' }}
+                  className="absolute p-3 bg-slate-900/90 border border-slate-800 rounded-xl shadow-xl backdrop-blur-md flex items-center space-x-2.5"
+                >
+                  <div className="p-1.5 bg-emerald-500/10 rounded-lg text-emerald-400 border border-emerald-500/20">
+                    <TrendingUp className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-bold text-slate-100">Progress</p>
+                    <p className="text-[9px] text-slate-400">+14.2% YoY Gain</p>
+                  </div>
+                </div>
+
+                {/* Floating 3D Node Card 4: Competency */}
+                <div
+                  style={{ transform: 'translate3d(85px, 75px, 50px)' }}
+                  className="absolute p-3 bg-slate-900/90 border border-slate-800 rounded-xl shadow-xl backdrop-blur-md flex items-center space-x-2.5"
+                >
+                  <div className="p-1.5 bg-amber-500/10 rounded-lg text-amber-400 border border-amber-500/20">
+                    <Award className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-bold text-slate-100">Competency</p>
+                    <p className="text-[9px] text-slate-400">Verified Index</p>
                   </div>
                 </div>
 
               </div>
-
-              {/* Floating Badge 1: Verification */}
-              <div className="absolute -top-4 -right-4 hidden sm:flex items-center space-x-2 px-3.5 py-2 bg-slate-900 border border-slate-700/80 rounded-2xl shadow-xl backdrop-blur-md">
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span className="text-xs font-bold text-slate-100">ISO & Government Ready</span>
-              </div>
-
-              {/* Floating Badge 2: Certified Badge */}
-              <div className="absolute -bottom-4 -left-4 hidden sm:flex items-center space-x-2 px-3.5 py-2 bg-slate-900 border border-slate-700/80 rounded-2xl shadow-xl backdrop-blur-md">
-                <Award className="w-4 h-4 text-amber-400" />
-                <span className="text-xs font-bold text-slate-100">Cryptographic Certificates</span>
-              </div>
-
             </div>
           </div>
 
