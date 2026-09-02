@@ -13,4 +13,5 @@ module.exports = {
   aiProvider: process.env.AI_PROVIDER || 'mock',
   aiApiKey: process.env.AI_API_KEY || '',
   googleClientId: process.env.GOOGLE_CLIENT_ID || '',
+  googleClientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
 };
