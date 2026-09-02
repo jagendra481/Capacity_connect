@@ -7,6 +7,9 @@ import Sidebar from '../components/common/Sidebar';
 import Footer from '../components/common/Footer';
 import Loader from '../components/common/Loader';
 
+// Public Home Landing Page
+import Home from '../pages/Home';
+
 // Auth Pages
 import Login from '../pages/auth/Login';
 import Signup from '../pages/auth/Signup';
@@ -503,26 +506,8 @@ export const AppRoutes = () => {
         }
       />
 
-      {/* Root Redirection */}
-      <Route
-        path="/"
-        element={
-          user ? (
-            <Navigate
-              to={
-                user.role === 'administrator'
-                  ? '/admin/dashboard'
-                  : user.role === 'trainer'
-                  ? '/trainer/dashboard'
-                  : '/trainee/dashboard'
-              }
-              replace
-            />
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }
-      />
+      {/* Public Landing Page Route */}
+      <Route path="/" element={<Home />} />
 
       {/* Fallback Catch-all */}
       <Route
