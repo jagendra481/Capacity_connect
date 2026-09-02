@@ -2,7 +2,7 @@ const authService = require('../services/authService');
 const response = require('../utils/response');
 const { validateSignupInput, validateLoginInput } = require('../utils/validators');
 
-const register = async (req, res, next) => {
+const signup = async (req, res, next) => {
   try {
     const { isValid, errors } = validateSignupInput(req.body);
     if (!isValid) {
@@ -10,7 +10,7 @@ const register = async (req, res, next) => {
     }
 
     const data = await authService.register(req.body);
-    return response.success(res, data, 'User registered successfully', 201);
+    return response.success(res, data, data.message, 201);
   } catch (error) {
     next(error);
   }
@@ -25,6 +25,32 @@ const login = async (req, res, next) => {
 
     const data = await authService.login(req.body);
     return response.success(res, data, 'Login successful', 200);
+  } catch (error) {
+    if (error.requiresEmailVerification) {
+      return res.status(403).json({
+        success: false,
+        requiresEmailVerification: true,
+        email: error.email,
+        message: error.message,
+      });
+    }
+    next(error);
+  }
+};
+
+const verifyEmailOTP = async (req, res, next) => {
+  try {
+    const data = await authService.verifyEmailOTP(req.body);
+    return response.success(res, data, data.message, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const resendOTP = async (req, res, next) => {
+  try {
+    const data = await authService.resendOTP(req.body);
+    return response.success(res, data, data.message, 200);
   } catch (error) {
     next(error);
   }
@@ -68,11 +94,8 @@ const me = async (req, res, next) => {
 
 const forgotPassword = async (req, res, next) => {
   try {
-    const { email } = req.body;
-    if (!email) {
-      return response.error(res, 'Email is required', 400);
-    }
-    return response.success(res, null, 'Password reset link sent to your email address.', 200);
+    const data = await authService.forgotPassword(req.body);
+    return response.success(res, data, data.message, 200);
   } catch (error) {
     next(error);
   }
@@ -80,19 +103,19 @@ const forgotPassword = async (req, res, next) => {
 
 const resetPassword = async (req, res, next) => {
   try {
-    const { token, newPassword } = req.body;
-    if (!token || !newPassword) {
-      return response.error(res, 'Token and new password are required', 400);
-    }
-    return response.success(res, null, 'Password updated successfully. Please log in.', 200);
+    const data = await authService.resetPassword(req.body);
+    return response.success(res, data, data.message, 200);
   } catch (error) {
     next(error);
   }
 };
 
 module.exports = {
-  register,
+  signup,
+  register: signup,
   login,
+  verifyEmailOTP,
+  resendOTP,
   sendOTP,
   verifyOTP,
   googleAuth,

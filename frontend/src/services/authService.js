@@ -1,8 +1,16 @@
 import api from './api';
 
 export const authService = {
-  login: async (credentials) => {
-    const res = await api.post('/auth/login', credentials);
+  signup: async (userData) => {
+    return api.post('/auth/signup', userData);
+  },
+
+  register: async (userData) => {
+    return api.post('/auth/signup', userData);
+  },
+
+  verifyEmailOTP: async (email, otp) => {
+    const res = await api.post('/auth/verify-email', { email, otp });
     if (res.data?.token) {
       localStorage.setItem('capacity_connect_token', res.data.token);
       localStorage.setItem('capacity_connect_user', JSON.stringify(res.data.user));
@@ -10,8 +18,12 @@ export const authService = {
     return res;
   },
 
-  register: async (userData) => {
-    const res = await api.post('/auth/register', userData);
+  resendOTP: async (email) => {
+    return api.post('/auth/resend-otp', { email });
+  },
+
+  login: async (credentials) => {
+    const res = await api.post('/auth/login', credentials);
     if (res.data?.token) {
       localStorage.setItem('capacity_connect_token', res.data.token);
       localStorage.setItem('capacity_connect_user', JSON.stringify(res.data.user));
@@ -54,8 +66,8 @@ export const authService = {
     return api.post('/auth/forgot-password', { email });
   },
 
-  resetPassword: async (token, newPassword) => {
-    return api.post('/auth/reset-password', { token, newPassword });
+  resetPassword: async (email, otp, newPassword) => {
+    return api.post('/auth/reset-password', { email, otp, newPassword });
   },
 };
 

@@ -19,6 +19,25 @@ const authenticate = async (req, res, next) => {
   next();
 };
 
+const requireRole = (...allowedRoles) => {
+  return (req, res, next) => {
+    if (!req.user || !req.user.role) {
+      return response.error(res, 'Forbidden: User identity missing.', 403);
+    }
+
+    if (!allowedRoles.includes(req.user.role)) {
+      return response.error(
+        res,
+        `Forbidden: Access restricted to ${allowedRoles.join(', ')} roles. Your role is '${req.user.role}'.`,
+        403
+      );
+    }
+
+    next();
+  };
+};
+
 module.exports = {
   authenticate,
+  requireRole,
 };

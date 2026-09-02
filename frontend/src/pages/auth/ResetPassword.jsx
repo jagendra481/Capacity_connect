@@ -1,32 +1,47 @@
 import React, { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import authService from '../../services/authService';
-import { Lock, Award, ArrowLeft, AlertCircle } from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
+import { Lock, Mail, KeyRound, Award, ArrowLeft, AlertCircle, ArrowRight } from 'lucide-react';
 
 export const ResetPassword = () => {
-  const [searchParams] = useSearchParams();
-  const token = searchParams.get('token') || 'demo-reset-token';
+  const { resetPassword } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
+  const [email, setEmail] = useState(location.state?.email || '');
+  const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+
     if (newPassword !== confirmPassword) {
       setError('Passwords do not match.');
       return;
     }
-    setError('');
+
+    if (newPassword.length < 6) {
+      setError('New password must be at least 6 characters long.');
+      return;
+    }
+
+    if (otp.length < 6) {
+      setError('Please enter the complete 6-digit verification code.');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      await authService.resetPassword(token, newPassword);
+      await resetPassword(email, otp, newPassword);
       navigate('/login', { replace: true });
     } catch (err) {
-      setError(err || 'Password reset failed. Please try again.');
+      setError(err || 'Password reset failed. Invalid or expired OTP.');
     } finally {
       setLoading(false);
     }
@@ -40,7 +55,7 @@ export const ResetPassword = () => {
             <Award className="w-7 h-7 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-slate-100">Set New Password</h1>
-          <p className="text-sm text-slate-400 mt-1">Please enter your new password below</p>
+          <p className="text-sm text-slate-400 mt-1">Enter your OTP verification code and new password</p>
         </div>
 
         {error && (
@@ -53,6 +68,41 @@ export const ResetPassword = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+              Email Address
+            </label>
+            <div className="relative">
+              <Mail className="w-5 h-5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@company.com"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-slate-100 text-sm focus:outline-none focus:border-cyan-500 transition-colors"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+              6-Digit Reset OTP Code
+            </label>
+            <div className="relative">
+              <KeyRound className="w-5 h-5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                required
+                maxLength={6}
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                placeholder="657934"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-slate-100 text-center font-mono text-lg tracking-widest focus:outline-none focus:border-cyan-500 transition-colors"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
               New Password
             </label>
             <div className="relative">
@@ -62,8 +112,8 @@ export const ResetPassword = () => {
                 required
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-slate-100 text-sm focus:outline-none focus:border-brand-500 transition-colors"
+                placeholder="At least 6 characters"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-slate-100 text-sm focus:outline-none focus:border-cyan-500 transition-colors"
               />
             </div>
           </div>
@@ -79,8 +129,8 @@ export const ResetPassword = () => {
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-slate-100 text-sm focus:outline-none focus:border-brand-500 transition-colors"
+                placeholder="Re-enter new password"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-slate-100 text-sm focus:outline-none focus:border-cyan-500 transition-colors"
               />
             </div>
           </div>
@@ -88,9 +138,10 @@ export const ResetPassword = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white font-semibold rounded-xl transition-all shadow-lg shadow-brand-600/20"
+            className="w-full py-3 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 disabled:opacity-50 text-slate-950 font-bold rounded-xl transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center space-x-2 mt-4"
           >
-            {loading ? 'Updating Password...' : 'Update Password'}
+            <span>{loading ? 'Updating Password...' : 'Reset Password'}</span>
+            {!loading && <ArrowRight className="w-4 h-4" />}
           </button>
 
           <div className="text-center pt-2">

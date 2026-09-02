@@ -32,14 +32,26 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     const res = await authService.login(credentials);
-    setUser(res.data.user);
+    if (res.data?.user) {
+      setUser(res.data.user);
+    }
     return res;
   };
 
-  const register = async (userData) => {
-    const res = await authService.register(userData);
-    setUser(res.data.user);
+  const signup = async (userData) => {
+    return authService.signup(userData);
+  };
+
+  const verifyEmailOTP = async (email, otp) => {
+    const res = await authService.verifyEmailOTP(email, otp);
+    if (res.data?.user) {
+      setUser(res.data.user);
+    }
     return res;
+  };
+
+  const resendOTP = async (email) => {
+    return authService.resendOTP(email);
   };
 
   const sendOTP = async (email) => {
@@ -48,14 +60,26 @@ export const AuthProvider = ({ children }) => {
 
   const verifyOTP = async (email, otp) => {
     const res = await authService.verifyOTP(email, otp);
-    setUser(res.data.user);
+    if (res.data?.user) {
+      setUser(res.data.user);
+    }
     return res;
   };
 
-  const googleLogin = async (googleData) => {
+  const loginWithGoogle = async (googleData) => {
     const res = await authService.googleAuth(googleData);
-    setUser(res.data.user);
+    if (res.data?.user) {
+      setUser(res.data.user);
+    }
     return res;
+  };
+
+  const forgotPassword = async (email) => {
+    return authService.forgotPassword(email);
+  };
+
+  const resetPassword = async (email, otp, newPassword) => {
+    return authService.resetPassword(email, otp, newPassword);
   };
 
   const logout = () => {
@@ -74,10 +98,16 @@ export const AuthProvider = ({ children }) => {
         user,
         loading,
         login,
-        register,
+        signup,
+        register: signup,
+        verifyEmailOTP,
+        resendOTP,
         sendOTP,
         verifyOTP,
-        googleLogin,
+        loginWithGoogle,
+        googleLogin: loginWithGoogle,
+        forgotPassword,
+        resetPassword,
         logout,
         updateUserProfileState,
         isAuthenticated: !!user,
