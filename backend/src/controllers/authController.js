@@ -30,6 +30,24 @@ const login = async (req, res, next) => {
   }
 };
 
+const sendOTP = async (req, res, next) => {
+  try {
+    const data = await authService.sendOTP(req.body);
+    return response.success(res, data, data.message, 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const verifyOTP = async (req, res, next) => {
+  try {
+    const data = await authService.verifyOTP(req.body);
+    return response.success(res, data, 'OTP verification successful. Welcome back!', 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
 const googleAuth = async (req, res, next) => {
   try {
     const data = await authService.googleAuth(req.body);
@@ -75,6 +93,8 @@ const resetPassword = async (req, res, next) => {
 module.exports = {
   register,
   login,
+  sendOTP,
+  verifyOTP,
   googleAuth,
   me,
   forgotPassword,

@@ -6,6 +6,8 @@ const { authenticate } = require('../middleware/authMiddleware');
 router.post('/register', authController.register);
 router.post('/signup', authController.register);
 router.post('/login', authController.login);
+router.post('/send-otp', authController.sendOTP);
+router.post('/verify-otp', authController.verifyOTP);
 router.post('/google', authController.googleAuth);
 router.get('/me', authenticate, authController.me);
 router.post('/forgot-password', authController.forgotPassword);

@@ -3,6 +3,9 @@ const UserProfile = require('../models/UserProfile');
 const { hashPassword, comparePassword } = require('../utils/password');
 const { generateToken } = require('../utils/jwt');
 
+// In-memory OTP datastore for 6-digit verification codes
+const otpStore = new Map();
+
 class AuthService {
   async register({ email, password, full_name, role = 'trainee', department_id = 1 }) {
     const existingUser = await User.findByEmail(email);
@@ -73,13 +76,96 @@ class AuthService {
     };
   }
 
+  async sendOTP({ email }) {
+    if (!email) {
+      const err = new Error('Email address is required.');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const user = await User.findByEmail(cleanEmail);
+    if (!user) {
+      const err = new Error('No account found with this email address. Please sign up first.');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    // Generate 6-digit OTP code
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+    otpStore.set(cleanEmail, { code: otpCode, expiresAt });
+
+    console.log(`\n========================================`);
+    console.log(`[OTP SERVICE] Generated 6-Digit OTP for ${cleanEmail}: ${otpCode}`);
+    console.log(`========================================\n`);
+
+    return {
+      success: true,
+      message: `OTP sent successfully to ${cleanEmail}`,
+      otpDemo: otpCode, // Demo convenience field for instant UI auto-fill or testing
+      expiresMinutes: 10,
+    };
+  }
+
+  async verifyOTP({ email, otp }) {
+    if (!email || !otp) {
+      const err = new Error('Email and 6-digit OTP code are required.');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const record = otpStore.get(cleanEmail);
+
+    if (!record || Date.now() > record.expiresAt) {
+      const err = new Error('OTP code has expired or is invalid. Please request a new one.');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    if (record.code !== String(otp).trim()) {
+      const err = new Error('Invalid 6-digit OTP code. Please check and try again.');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    // Consume OTP
+    otpStore.delete(cleanEmail);
+
+    const user = await User.findByEmail(cleanEmail);
+    if (!user) {
+      const err = new Error('User account not found.');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    const token = generateToken({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      full_name: user.full_name,
+    });
+
+    const profile = await UserProfile.getByUserId(user.id);
+    const { password_hash, ...userClean } = user;
+
+    return {
+      user: {
+        ...userClean,
+        profile,
+      },
+      token,
+    };
+  }
+
   async googleAuth({ credential, email: bodyEmail, name: bodyName, picture: bodyPicture, sub: bodySub }) {
     let email = bodyEmail;
     let name = bodyName;
     let picture = bodyPicture;
     let googleId = bodySub;
 
-    // If Google credential ID Token is provided, attempt verification with Google's API
     if (credential) {
       try {
         const verifyRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
@@ -90,7 +176,6 @@ class AuthService {
           picture = payload.picture || picture;
           googleId = payload.sub || googleId;
         } else {
-          // If tokeninfo fetch fails (e.g., offline or mock client_id), fallback to decoded token payload
           const base64Url = credential.split('.')[1];
           if (base64Url) {
             const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -118,11 +203,9 @@ class AuthService {
       throw err;
     }
 
-    // 1. Check if user exists by Google ID or Email
     let user = (googleId && (await User.findByGoogleId(googleId))) || (await User.findByEmail(email));
 
     if (!user) {
-      // 2. Create new Google user
       user = await User.create({
         email,
         full_name: name || email.split('@')[0],

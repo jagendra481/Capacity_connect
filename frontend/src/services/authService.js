@@ -19,6 +19,19 @@ export const authService = {
     return res;
   },
 
+  sendOTP: async (email) => {
+    return api.post('/auth/send-otp', { email });
+  },
+
+  verifyOTP: async (email, otp) => {
+    const res = await api.post('/auth/verify-otp', { email, otp });
+    if (res.data?.token) {
+      localStorage.setItem('capacity_connect_token', res.data.token);
+      localStorage.setItem('capacity_connect_user', JSON.stringify(res.data.user));
+    }
+    return res;
+  },
+
   googleAuth: async (googleData) => {
     const res = await api.post('/auth/google', googleData);
     if (res.data?.token) {
