@@ -4,7 +4,7 @@ export const GoogleLoginButton = ({ onGoogleSuccess, onError, label = 'Continue 
   const googleBtnRef = useRef(null);
 
   useEffect(() => {
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '1048827394857-capacityconnectdemo.apps.googleusercontent.com';
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '382657497984-5d9hmrdb3974pn0dm8pnr9t8k5pdbbgo.apps.googleusercontent.com';
 
     const loadGoogleSdk = () => {
       if (window.google?.accounts?.id) {
