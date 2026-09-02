@@ -21,7 +21,6 @@ export const Login = () => {
   // OTP Flow states: 'enter_email' | 'enter_otp'
   const [otpStep, setOtpStep] = useState('enter_email');
   const [otpSentMessage, setOtpSentMessage] = useState('');
-  const [otpDemoCode, setOtpDemoCode] = useState('');
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -47,15 +46,12 @@ export const Login = () => {
     e.preventDefault();
     setError('');
     setOtpSentMessage('');
+    setOtpCode(''); // Keep OTP box blank so user enters code received in email
     setLoading(true);
 
     try {
       const res = await sendOTP(email);
       setOtpSentMessage(res.data?.message || `6-digit OTP code sent to ${email}`);
-      if (res.data?.otpDemo) {
-        setOtpDemoCode(res.data.otpDemo);
-        setOtpCode(res.data.otpDemo); // Auto-fill demo OTP for convenience
-      }
       setOtpStep('enter_otp');
     } catch (err) {
       setError(err || 'Failed to send OTP. Please ensure your email is registered.');
@@ -75,7 +71,7 @@ export const Login = () => {
       const destination = location.state?.from?.pathname || getDashboardRoute(role);
       navigate(destination, { replace: true });
     } catch (err) {
-      setError(err || 'Invalid OTP code. Please check and try again.');
+      setError(err || 'Invalid OTP code. Please check your email and try again.');
     } finally {
       setLoading(false);
     }
@@ -156,6 +152,8 @@ export const Login = () => {
             onClick={() => {
               setLoginMode('otp');
               setError('');
+              setOtpStep('enter_email');
+              setOtpCode('');
             }}
             className={`py-2 rounded-lg transition-all ${
               loginMode === 'otp'
@@ -274,11 +272,6 @@ export const Login = () => {
                     <CheckCircle2 className="w-4 h-4 text-cyan-400 flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="font-semibold">{otpSentMessage}</p>
-                      {otpDemoCode && (
-                        <p className="mt-1 font-mono text-[11px] text-emerald-400 bg-slate-950 p-1.5 rounded border border-slate-800">
-                          Demo OTP: <strong>{otpDemoCode}</strong>
-                        </p>
-                      )}
                     </div>
                   </div>
                 )}
@@ -290,7 +283,10 @@ export const Login = () => {
                     </label>
                     <button
                       type="button"
-                      onClick={() => setOtpStep('enter_email')}
+                      onClick={() => {
+                        setOtpStep('enter_email');
+                        setOtpCode('');
+                      }}
                       className="text-xs text-cyan-400 hover:underline flex items-center space-x-1"
                     >
                       <RefreshCw className="w-3 h-3" />
@@ -306,7 +302,7 @@ export const Login = () => {
                       maxLength={6}
                       value={otpCode}
                       onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                      placeholder="657934"
+                      placeholder="• • • • • •"
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-slate-100 text-center font-mono text-lg tracking-widest focus:outline-none focus:border-cyan-500 transition-colors"
                     />
                   </div>
