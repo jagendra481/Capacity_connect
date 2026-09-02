@@ -1,10 +1,11 @@
+const env = require('../config/env');
 const logger = require('../utils/logger');
 
 let nodemailer = null;
 try {
   nodemailer = require('nodemailer');
 } catch (e) {
-  // Nodemailer is optional; fallback console logger will handle emails
+  // Nodemailer fallback
 }
 
 class EmailService {
@@ -14,18 +15,22 @@ class EmailService {
   }
 
   initTransporter() {
-    if (nodemailer && process.env.SMTP_HOST && process.env.SMTP_USER) {
+    const smtpHost = process.env.SMTP_HOST || env.smtpHost;
+    const smtpUser = process.env.SMTP_USER || env.smtpUser;
+    const smtpPass = process.env.SMTP_PASSWORD || env.smtpPassword;
+
+    if (nodemailer && smtpHost && smtpUser && smtpPass) {
       try {
         this.transporter = nodemailer.createTransport({
-          host: process.env.SMTP_HOST,
+          host: smtpHost,
           port: parseInt(process.env.SMTP_PORT || '587'),
-          secure: process.env.SMTP_PORT === '465',
+          secure: false, // 587 uses STARTTLS
           auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASSWORD,
+            user: smtpUser,
+            pass: smtpPass,
           },
         });
-        logger.info('Nodemailer SMTP Transporter initialized.');
+        logger.info(`Nodemailer SMTP Transporter initialized for ${smtpUser}`);
       } catch (err) {
         logger.warn(`SMTP initialization warning: ${err.message}`);
         this.transporter = null;
@@ -34,6 +39,10 @@ class EmailService {
   }
 
   async sendVerificationOTP({ email, otp, purpose = 'email_verification' }) {
+    if (!this.transporter) {
+      this.initTransporter();
+    }
+
     const isPasswordReset = purpose === 'password_reset';
     const subject = isPasswordReset
       ? 'CAPACITY CONNECT - Password Reset Code'
@@ -77,20 +86,26 @@ class EmailService {
 
     if (this.transporter) {
       try {
-        await this.transporter.sendMail({
-          from: `"Capacity Connect" <${process.env.SMTP_USER}>`,
+        const smtpUser = process.env.SMTP_USER || env.smtpUser;
+        const info = await this.transporter.sendMail({
+          from: `"Capacity Connect" <${smtpUser}>`,
           to: email,
           subject,
           html: htmlContent,
         });
-        logger.info(`Verification email sent successfully to ${email}`);
+        logger.info(`Verification email sent to ${email} (MessageID: ${info.messageId})`);
+        console.log(`\n======================================================`);
+        console.log(`✅ REAL GMAIL EMAIL SENT LIVE TO: ${email}`);
+        console.log(`   Message ID: ${info.messageId}`);
+        console.log(`======================================================\n`);
         return true;
       } catch (err) {
         logger.error(`SMTP sendMail error to ${email}: ${err.message}`);
+        console.error(`❌ SMTP sendMail error: ${err.message}`);
       }
     }
 
-    // Console logger fallback when SMTP is not configured or in local development
+    // Console logger fallback
     console.log(`\n======================================================`);
     console.log(`[EMAIL SERVICE MOCK] To: ${email} | Subject: ${subject}`);
     console.log(`[EMAIL SERVICE MOCK] 6-Digit OTP Code: >>> ${otp} <<<`);
