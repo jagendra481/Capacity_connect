@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { getDashboardRoute } from '../../utils/roleUtils';
-import { Award, Mail, ArrowRight, AlertCircle, CheckCircle2, RefreshCw } from 'lucide-react';
+import { Award, ArrowRight, AlertCircle, CheckCircle2, RefreshCw } from 'lucide-react';
 
 export const VerifyEmail = () => {
   const { verifyEmailOTP, resendOTP, user } = useAuth();
@@ -15,12 +15,24 @@ export const VerifyEmail = () => {
   const inputRefs = useRef([]);
   
   const [error, setError] = useState('');
-  const [successMsg, setSuccessMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState(location.state?.message || 'Verification code sent.');
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
 
-  // Resend Cooldown Timer (60s)
-  const [cooldown, setCooldown] = useState(60);
+  // 30-Second Resend Cooldown calculation with localStorage persistence across refreshes
+  const getInitialCooldown = () => {
+    if (!targetEmail) return 30;
+    const storedTimestamp = localStorage.getItem(`otp_sent_at_${targetEmail}`);
+    if (storedTimestamp) {
+      const elapsedSeconds = Math.floor((Date.now() - Number(storedTimestamp)) / 1000);
+      return Math.max(0, 30 - elapsedSeconds);
+    }
+    // Set initial 30s timestamp if none exists
+    localStorage.setItem(`otp_sent_at_${targetEmail}`, String(Date.now()));
+    return 30;
+  };
+
+  const [cooldown, setCooldown] = useState(getInitialCooldown);
 
   useEffect(() => {
     if (!targetEmail && !user) {
@@ -31,10 +43,19 @@ export const VerifyEmail = () => {
   useEffect(() => {
     let timer;
     if (cooldown > 0) {
-      timer = setInterval(() => setCooldown(c => c - 1), 1000);
+      timer = setInterval(() => {
+        const storedTimestamp = localStorage.getItem(`otp_sent_at_${targetEmail}`);
+        if (storedTimestamp) {
+          const elapsed = Math.floor((Date.now() - Number(storedTimestamp)) / 1000);
+          const remaining = Math.max(0, 30 - elapsed);
+          setCooldown(remaining);
+        } else {
+          setCooldown((c) => Math.max(0, c - 1));
+        }
+      }, 1000);
     }
     return () => clearInterval(timer);
-  }, [cooldown]);
+  }, [cooldown, targetEmail]);
 
   const handleInputChange = (index, value) => {
     if (!/^\d*$/.test(value)) return;
@@ -87,10 +108,12 @@ export const VerifyEmail = () => {
     try {
       const res = await verifyEmailOTP(targetEmail, fullOtp);
       localStorage.removeItem('pending_verify_email');
+      localStorage.removeItem(`otp_sent_at_${targetEmail}`);
       const userRole = res.data?.user?.role || 'trainee';
       navigate(getDashboardRoute(userRole), { replace: true });
     } catch (err) {
-      setError(err || 'Verification failed. Invalid or expired code.');
+      const msg = typeof err === 'string' ? err : err?.message || 'Invalid verification code. Please try again.';
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -105,12 +128,18 @@ export const VerifyEmail = () => {
 
     try {
       const res = await resendOTP(targetEmail);
-      setSuccessMsg(res.data?.message || 'New verification code sent to your email.');
-      setCooldown(60);
+      const now = Date.now();
+      localStorage.setItem(`otp_sent_at_${targetEmail}`, String(now));
+      setCooldown(30);
+      setSuccessMsg(res.data?.message || 'New verification code sent.');
       setOtp(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
     } catch (err) {
-      setError(err || 'Failed to resend verification code. Please try again.');
+      const retryAfter = err?.retryAfter || 30;
+      if (err?.statusCode === 429) {
+        setCooldown(retryAfter);
+      }
+      setError(err?.message || err || 'Failed to resend verification code. Please try again.');
     } finally {
       setResending(false);
     }
@@ -127,7 +156,7 @@ export const VerifyEmail = () => {
         </div>
 
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">Verify Your Email</h1>
+          <h1 className="text-2xl font-bold text-slate-100">Verify your email</h1>
           <p className="text-sm text-slate-400 mt-1.5 leading-relaxed">
             We've sent a 6-digit verification code to:
           </p>
@@ -141,7 +170,7 @@ export const VerifyEmail = () => {
           </div>
         )}
 
-        {successMsg && (
+        {successMsg && !error && (
           <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-start space-x-2.5 text-emerald-400 text-xs text-left">
             <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" />
             <span>{successMsg}</span>
@@ -175,7 +204,7 @@ export const VerifyEmail = () => {
           </button>
         </form>
 
-        {/* Resend Cooldown Section */}
+        {/* 30-Second Cooldown Section */}
         <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
           <span>Didn't receive the code?</span>
           <button
@@ -184,10 +213,16 @@ export const VerifyEmail = () => {
             disabled={cooldown > 0 || resending}
             className="text-cyan-400 hover:underline font-semibold disabled:opacity-40 disabled:no-underline flex items-center space-x-1"
           >
-            {resending && <RefreshCw className="w-3 h-3 animate-spin" />}
-            <span>
-              {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend OTP'}
-            </span>
+            {resending ? (
+              <>
+                <RefreshCw className="w-3 h-3 animate-spin" />
+                <span>Sending verification code...</span>
+              </>
+            ) : cooldown > 0 ? (
+              <span>Resend OTP in {cooldown}s</span>
+            ) : (
+              <span>Resend OTP</span>
+            )}
           </button>
         </div>
 

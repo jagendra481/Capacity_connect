@@ -3,10 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import GoogleLoginButton from '../../components/auth/GoogleLoginButton';
 import { getDashboardRoute } from '../../utils/roleUtils';
-import { User, Mail, Lock, Award, ArrowRight, AlertCircle } from 'lucide-react';
+import { User, Mail, Lock, Award, ArrowRight, AlertCircle, LogIn } from 'lucide-react';
 
 export const Signup = () => {
-  const { signup, loginWithGoogle } = useAuth();
+  const { signup, signupWithGoogle } = useAuth();
   const navigate = useNavigate();
 
   const [fullName, setFullName] = useState('');
@@ -15,11 +15,13 @@ export const Signup = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const [error, setError] = useState('');
+  const [accountExists, setAccountExists] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setAccountExists(false);
 
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
@@ -43,13 +45,20 @@ export const Signup = () => {
 
       if (res.data?.requiresEmailVerification) {
         localStorage.setItem('pending_verify_email', email);
-        navigate('/verify-email', { state: { email } });
+        const sentAt = res.data?.otpSentTimestamp || Date.now();
+        localStorage.setItem(`otp_sent_at_${email}`, String(sentAt));
+        navigate('/verify-email', { state: { email, message: res.data?.message || 'Verification code sent.' } });
       } else {
         const userRole = res.data?.user?.role || 'trainee';
         navigate(getDashboardRoute(userRole), { replace: true });
       }
     } catch (err) {
-      setError(err || 'Failed to create account. Please check your information.');
+      if (err?.accountExists) {
+        setAccountExists(true);
+        setError('An account with this email already exists. Please log in.');
+      } else {
+        setError(err?.message || err || 'Failed to create account. Please check your information.');
+      }
     } finally {
       setLoading(false);
     }
@@ -57,13 +66,14 @@ export const Signup = () => {
 
   const handleGoogleSuccess = async (googlePayload) => {
     setError('');
+    setAccountExists(false);
     setLoading(true);
     try {
-      const res = await loginWithGoogle(googlePayload);
+      const res = await signupWithGoogle(googlePayload);
       const userRole = res.data?.user?.role || 'trainee';
       navigate(getDashboardRoute(userRole), { replace: true });
     } catch (err) {
-      setError(err || 'Google signup failed');
+      setError(err?.message || err || 'Google signup failed');
     } finally {
       setLoading(false);
     }
@@ -78,14 +88,27 @@ export const Signup = () => {
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-600 to-cyan-400 flex items-center justify-center mx-auto mb-3 shadow-lg shadow-brand-500/20">
             <Award className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-100">Create Account</h1>
+          <h1 className="text-2xl font-bold text-slate-100">Create your account</h1>
           <p className="text-sm text-slate-400 mt-1">Join the Capacity Connect Platform</p>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-start space-x-3 text-red-400 text-sm">
-            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-            <span>{error}</span>
+          <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm space-y-3">
+            <div className="flex items-start space-x-3">
+              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <span>{error}</span>
+            </div>
+            {accountExists && (
+              <div className="pt-2 border-t border-red-500/20 text-center">
+                <Link
+                  to="/login"
+                  className="inline-flex items-center space-x-2 px-4 py-2 bg-slate-800 text-cyan-400 border border-cyan-500/30 text-xs font-bold rounded-lg transition-transform hover:scale-[1.02]"
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span>Log In Now</span>
+                </Link>
+              </div>
+            )}
           </div>
         )}
 
@@ -176,7 +199,7 @@ export const Signup = () => {
             disabled={loading}
             className="w-full py-3 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 disabled:opacity-50 text-slate-950 font-bold rounded-xl transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center space-x-2 mt-4"
           >
-            <span>{loading ? 'Creating Account...' : 'Create Account'}</span>
+            <span>{loading ? 'Sending verification code...' : 'Create Account'}</span>
             {!loading && <ArrowRight className="w-4 h-4" />}
           </button>
         </form>

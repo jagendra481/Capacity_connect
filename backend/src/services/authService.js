@@ -16,11 +16,36 @@ class AuthService {
 
     const cleanEmail = String(email).trim().toLowerCase();
     const existingUser = await User.findByEmail(cleanEmail);
-    
+
     if (existingUser) {
-      const err = new Error('An account with this email address already exists. Please sign in or use forgot password.');
-      err.statusCode = 400;
-      throw err;
+      if (existingUser.email_verified) {
+        const err = new Error('An account with this email already exists. Please log in.');
+        err.statusCode = 400;
+        err.accountExists = true;
+        throw err;
+      }
+
+      // Existing unverified account: generate new OTP respecting 30s cooldown
+      const otpData = await OTPModel.createOTP({
+        userId: existingUser.id,
+        email: existingUser.email,
+        purpose: 'email_verification',
+      });
+
+      // Send email asynchronously
+      emailService.sendVerificationOTP({
+        email: existingUser.email,
+        otp: otpData.otpCode,
+        purpose: 'email_verification',
+      });
+
+      return {
+        success: true,
+        requiresEmailVerification: true,
+        email: existingUser.email,
+        otpSentTimestamp: otpData.createdAt,
+        message: 'An unverified account with this email already exists. A new verification code has been sent.',
+      };
     }
 
     // Role Security: Public signups are forced to 'trainee'
@@ -38,16 +63,17 @@ class AuthService {
       email_verified: false,
     });
 
-    // Generate & Send Email Verification OTP
-    const { otpCode } = await OTPModel.createOTP({
+    // Generate OTP (enforces 30s cooldown)
+    const otpData = await OTPModel.createOTP({
       userId: user.id,
       email: user.email,
       purpose: 'email_verification',
     });
 
-    await emailService.sendVerificationOTP({
+    // Send email asynchronously
+    emailService.sendVerificationOTP({
       email: user.email,
-      otp: otpCode,
+      otp: otpData.otpCode,
       purpose: 'email_verification',
     });
 
@@ -55,7 +81,8 @@ class AuthService {
       success: true,
       requiresEmailVerification: true,
       email: user.email,
-      message: 'Account created successfully! We have sent a 6-digit verification code to your email address.',
+      otpSentTimestamp: otpData.createdAt,
+      message: 'Verification code sent successfully. We have sent a 6-digit verification code to your email address.',
     };
   }
 
@@ -128,21 +155,24 @@ class AuthService {
       };
     }
 
-    const { otpCode } = await OTPModel.createOTP({
+    // Generate new OTP (enforces 30-second cooldown)
+    const otpData = await OTPModel.createOTP({
       userId: user.id,
       email: user.email,
       purpose,
     });
 
-    await emailService.sendVerificationOTP({
+    // Send email asynchronously
+    emailService.sendVerificationOTP({
       email: user.email,
-      otp: otpCode,
+      otp: otpData.otpCode,
       purpose,
     });
 
     return {
       success: true,
-      message: 'A new 6-digit verification code has been sent to your email address.',
+      otpSentTimestamp: otpData.createdAt,
+      message: 'New verification code sent.',
     };
   }
 
@@ -156,9 +186,11 @@ class AuthService {
     const cleanEmail = String(email).trim().toLowerCase();
     const user = await User.findByEmail(cleanEmail);
 
+    // RULE: IF USER DOES NOT EXIST -> DO NOT CREATE USER, DO NOT LOG IN
     if (!user) {
-      const err = new Error('Invalid email or password.');
-      err.statusCode = 401;
+      const err = new Error('Account not found. Please sign up first.');
+      err.statusCode = 404;
+      err.accountNotFound = true;
       throw err;
     }
 
@@ -171,20 +203,24 @@ class AuthService {
 
     // Check Email Verification status
     if (user.email_verified === false) {
-      // Generate & resend OTP automatically
-      const { otpCode } = await OTPModel.createOTP({
-        userId: user.id,
-        email: user.email,
-        purpose: 'email_verification',
-      });
+      // Send OTP if cooldown permits
+      try {
+        const otpData = await OTPModel.createOTP({
+          userId: user.id,
+          email: user.email,
+          purpose: 'email_verification',
+        });
 
-      await emailService.sendVerificationOTP({
-        email: user.email,
-        otp: otpCode,
-        purpose: 'email_verification',
-      });
+        emailService.sendVerificationOTP({
+          email: user.email,
+          otp: otpData.otpCode,
+          purpose: 'email_verification',
+        });
+      } catch (e) {
+        // Ignore cooldown exception when re-navigating to login
+      }
 
-      const err = new Error('Please verify your email address before logging in. A new 6-digit code has been sent to your email.');
+      const err = new Error('Please verify your email before continuing.');
       err.statusCode = 403;
       err.requiresEmailVerification = true;
       err.email = user.email;
@@ -238,8 +274,9 @@ class AuthService {
 
     let user = await User.findByEmail(cleanEmail);
     if (!user) {
-      const err = new Error('User account not found.');
+      const err = new Error('Account not found. Please sign up first.');
       err.statusCode = 404;
+      err.accountNotFound = true;
       throw err;
     }
 
@@ -268,7 +305,7 @@ class AuthService {
     };
   }
 
-  async googleAuth({ credential, email: bodyEmail, name: bodyName, picture: bodyPicture, sub: bodySub }) {
+  async googleAuth({ credential, email: bodyEmail, name: bodyName, picture: bodyPicture, sub: bodySub, mode = 'login' }) {
     let email = bodyEmail;
     let name = bodyName;
     let picture = bodyPicture;
@@ -280,10 +317,6 @@ class AuthService {
         const verifyRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
         if (verifyRes.ok) {
           const payload = await verifyRes.json();
-          // Verify expected audience if configured
-          if (env.googleClientId && payload.aud && payload.aud !== env.googleClientId) {
-            console.warn(`[Google OAuth Warning] Audience mismatch: got ${payload.aud}, expected ${env.googleClientId}`);
-          }
           email = payload.email || email;
           name = payload.name || name || payload.email?.split('@')[0];
           picture = payload.picture || picture;
@@ -318,27 +351,35 @@ class AuthService {
     }
 
     const cleanEmail = String(email).trim().toLowerCase();
-
-    // CASE A: User exists by Google ID
     let user = googleId ? await User.findByGoogleId(googleId) : null;
 
     if (!user) {
-      // CASE C: User exists by Email (Account Linking)
-      const existingUserByEmail = await User.findByEmail(cleanEmail);
-      if (existingUserByEmail) {
-        user = await User.linkGoogleAccount(existingUserByEmail.id, googleId || `google_${Date.now()}`);
-      } else {
-        // CASE B: New User via Google Signup
-        user = await User.create({
-          email: cleanEmail,
-          full_name: name || cleanEmail.split('@')[0],
-          google_id: googleId || `google_${Date.now()}`,
-          role: 'trainee',
-          department_id: 1,
-          email_verified: true, // Google identity is pre-verified
-          profile_image: picture,
-        });
+      user = await User.findByEmail(cleanEmail);
+      if (user) {
+        // Link google account to existing email user
+        user = await User.linkGoogleAccount(user.id, googleId || `google_${Date.now()}`);
       }
+    }
+
+    // STRICT GOOGLE LOGIN RULE: If mode === 'login' and user is not found -> DO NOT CREATE USER
+    if (!user && mode === 'login') {
+      const err = new Error('No Capacity Connect account was found for this Google account. Please sign up first.');
+      err.statusCode = 404;
+      err.accountNotFound = true;
+      throw err;
+    }
+
+    // GOOGLE SIGNUP RULE: If mode === 'signup' and user is not found -> Create user
+    if (!user && mode === 'signup') {
+      user = await User.create({
+        email: cleanEmail,
+        full_name: name || cleanEmail.split('@')[0],
+        google_id: googleId || `google_${Date.now()}`,
+        role: 'trainee',
+        department_id: 1,
+        email_verified: true, // Google identity pre-verified
+        profile_image: picture,
+      });
     }
 
     await User.updateLastLogin(user.id);
@@ -373,17 +414,23 @@ class AuthService {
     const user = await User.findByEmail(cleanEmail);
 
     if (user) {
-      const { otpCode } = await OTPModel.createOTP({
+      const otpData = await OTPModel.createOTP({
         userId: user.id,
         email: user.email,
         purpose: 'password_reset',
       });
 
-      await emailService.sendVerificationOTP({
+      emailService.sendVerificationOTP({
         email: user.email,
-        otp: otpCode,
+        otp: otpData.otpCode,
         purpose: 'password_reset',
       });
+
+      return {
+        success: true,
+        otpSentTimestamp: otpData.createdAt,
+        message: 'If an account exists for this email, a 6-digit password reset code has been sent.',
+      };
     }
 
     // Generic success message to prevent account enumeration

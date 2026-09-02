@@ -67,7 +67,15 @@ export const AuthProvider = ({ children }) => {
   };
 
   const loginWithGoogle = async (googleData) => {
-    const res = await authService.googleAuth(googleData);
+    const res = await authService.googleAuth(googleData, 'login');
+    if (res.data?.user) {
+      setUser(res.data.user);
+    }
+    return res;
+  };
+
+  const signupWithGoogle = async (googleData) => {
+    const res = await authService.googleAuth(googleData, 'signup');
     if (res.data?.user) {
       setUser(res.data.user);
     }
@@ -105,6 +113,7 @@ export const AuthProvider = ({ children }) => {
         sendOTP,
         verifyOTP,
         loginWithGoogle,
+        signupWithGoogle,
         googleLogin: loginWithGoogle,
         forgotPassword,
         resetPassword,

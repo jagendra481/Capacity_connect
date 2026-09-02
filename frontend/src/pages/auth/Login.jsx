@@ -3,10 +3,10 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import GoogleLoginButton from '../../components/auth/GoogleLoginButton';
 import { getDashboardRoute } from '../../utils/roleUtils';
-import { Lock, Mail, Award, ArrowRight, ShieldCheck, AlertCircle, KeyRound, CheckCircle2, RefreshCw } from 'lucide-react';
+import { Lock, Mail, Award, ArrowRight, ShieldCheck, AlertCircle, KeyRound, CheckCircle2, RefreshCw, UserPlus } from 'lucide-react';
 
 export const Login = () => {
-  const { login, googleLogin, sendOTP, verifyOTP } = useAuth();
+  const { login, loginWithGoogle, sendOTP, verifyOTP } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -23,20 +23,30 @@ export const Login = () => {
   const [otpSentMessage, setOtpSentMessage] = useState('');
 
   const [error, setError] = useState('');
+  const [accountNotFound, setAccountNotFound] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setAccountNotFound(false);
     setLoading(true);
 
     try {
       const res = await login({ email, password });
-      const role = res.data.user.role;
+      const role = res.data?.user?.role || 'trainee';
       const destination = location.state?.from?.pathname || getDashboardRoute(role);
       navigate(destination, { replace: true });
     } catch (err) {
-      setError(err || 'Failed to login. Please check your credentials.');
+      if (err?.accountNotFound || err?.statusCode === 404) {
+        setAccountNotFound(true);
+        setError('Account not found. Please sign up first.');
+      } else if (err?.requiresEmailVerification) {
+        localStorage.setItem('pending_verify_email', err.email || email);
+        navigate('/verify-email', { state: { email: err.email || email, message: 'Please verify your email before continuing.' } });
+      } else {
+        setError(err?.message || err || 'Invalid email or password.');
+      }
     } finally {
       setLoading(false);
     }
@@ -45,8 +55,9 @@ export const Login = () => {
   const handleSendOTP = async (e) => {
     e.preventDefault();
     setError('');
+    setAccountNotFound(false);
     setOtpSentMessage('');
-    setOtpCode(''); // Keep OTP box blank so user enters code received in email
+    setOtpCode('');
     setLoading(true);
 
     try {
@@ -54,7 +65,12 @@ export const Login = () => {
       setOtpSentMessage(res.data?.message || `6-digit OTP code sent to ${email}`);
       setOtpStep('enter_otp');
     } catch (err) {
-      setError(err || 'Failed to send OTP. Please ensure your email is registered.');
+      if (err?.accountNotFound || err?.statusCode === 404) {
+        setAccountNotFound(true);
+        setError('Account not found. Please sign up first.');
+      } else {
+        setError(err?.message || err || 'Failed to send OTP code. Please check your email.');
+      }
     } finally {
       setLoading(false);
     }
@@ -67,11 +83,11 @@ export const Login = () => {
 
     try {
       const res = await verifyOTP(email, otpCode);
-      const role = res.data.user.role;
+      const role = res.data?.user?.role || 'trainee';
       const destination = location.state?.from?.pathname || getDashboardRoute(role);
       navigate(destination, { replace: true });
     } catch (err) {
-      setError(err || 'Invalid OTP code. Please check your email and try again.');
+      setError(err?.message || err || 'Invalid verification code. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -79,14 +95,20 @@ export const Login = () => {
 
   const handleGoogleSuccess = async (googlePayload) => {
     setError('');
+    setAccountNotFound(false);
     setLoading(true);
     try {
-      const res = await googleLogin(googlePayload);
-      const role = res.data.user.role;
+      const res = await loginWithGoogle(googlePayload);
+      const role = res.data?.user?.role || 'trainee';
       const destination = location.state?.from?.pathname || getDashboardRoute(role);
       navigate(destination, { replace: true });
     } catch (err) {
-      setError(err || 'Google login failed');
+      if (err?.accountNotFound || err?.statusCode === 404) {
+        setAccountNotFound(true);
+        setError('No Capacity Connect account was found for this Google account. Please sign up first.');
+      } else {
+        setError(err?.message || err || 'Google login failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -96,15 +118,16 @@ export const Login = () => {
     setEmail(demoEmail);
     setPassword('Password123!');
     setError('');
+    setAccountNotFound(false);
     setLoading(true);
 
     try {
       const res = await login({ email: demoEmail, password: 'Password123!' });
-      const role = res.data.user.role;
+      const role = res.data?.user?.role || 'trainee';
       const destination = getDashboardRoute(role);
       navigate(destination, { replace: true });
     } catch (err) {
-      setError(err || 'Demo login failed');
+      setError(err?.message || err || 'Demo login failed');
     } finally {
       setLoading(false);
     }
@@ -112,7 +135,6 @@ export const Login = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-950 p-4 relative overflow-hidden">
-      {/* Background glow effects */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-brand-600/20 blur-[120px] rounded-full pointer-events-none" />
 
       <div className="w-full max-w-md bg-slate-900/90 border border-slate-800 rounded-2xl p-8 shadow-2xl backdrop-blur-xl z-10">
@@ -125,9 +147,22 @@ export const Login = () => {
         </div>
 
         {error && (
-          <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-start space-x-3 text-red-400 text-sm">
-            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-            <span>{error}</span>
+          <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm space-y-3">
+            <div className="flex items-start space-x-3">
+              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <span>{error}</span>
+            </div>
+            {accountNotFound && (
+              <div className="pt-2 border-t border-red-500/20 text-center">
+                <Link
+                  to="/signup"
+                  className="inline-flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-teal-500 text-slate-950 text-xs font-bold rounded-lg transition-transform hover:scale-[1.02]"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  <span>Create Account</span>
+                </Link>
+              </div>
+            )}
           </div>
         )}
 
@@ -138,6 +173,7 @@ export const Login = () => {
             onClick={() => {
               setLoginMode('password');
               setError('');
+              setAccountNotFound(false);
             }}
             className={`py-2 rounded-lg transition-all ${
               loginMode === 'password'
@@ -152,6 +188,7 @@ export const Login = () => {
             onClick={() => {
               setLoginMode('otp');
               setError('');
+              setAccountNotFound(false);
               setOtpStep('enter_email');
               setOtpCode('');
             }}
@@ -231,7 +268,7 @@ export const Login = () => {
           </form>
         )}
 
-        {/* MODE 2: OTP (One-Time Password) Login */}
+        {/* MODE 2: OTP Login */}
         {loginMode === 'otp' && (
           <div className="space-y-4">
             {otpStep === 'enter_email' ? (
@@ -261,7 +298,7 @@ export const Login = () => {
                   disabled={loading}
                   className="w-full py-3 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 disabled:opacity-50 text-slate-950 font-bold rounded-xl transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center space-x-2"
                 >
-                  <span>{loading ? 'Sending Code...' : 'Send OTP Code'}</span>
+                  <span>{loading ? 'Sending verification code...' : 'Send OTP Code'}</span>
                   {!loading && <ArrowRight className="w-4 h-4" />}
                 </button>
               </form>
@@ -313,7 +350,7 @@ export const Login = () => {
                   disabled={loading || otpCode.length < 6}
                   className="w-full py-3 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 disabled:opacity-50 text-slate-950 font-bold rounded-xl transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center space-x-2"
                 >
-                  <span>{loading ? 'Verifying OTP...' : 'Verify & Sign In'}</span>
+                  <span>{loading ? 'Verifying...' : 'Verify & Sign In'}</span>
                   {!loading && <ArrowRight className="w-4 h-4" />}
                 </button>
               </form>

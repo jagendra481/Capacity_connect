@@ -44,8 +44,8 @@ export const authService = {
     return res;
   },
 
-  googleAuth: async (googleData) => {
-    const res = await api.post('/auth/google', googleData);
+  googleAuth: async (googleData, mode = 'login') => {
+    const res = await api.post('/auth/google', { ...googleData, mode });
     if (res.data?.token) {
       localStorage.setItem('capacity_connect_token', res.data.token);
       localStorage.setItem('capacity_connect_user', JSON.stringify(res.data.user));
