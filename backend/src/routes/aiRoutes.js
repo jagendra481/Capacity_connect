@@ -1,20 +1,20 @@
 const express = require('express');
 const router = express.Router();
 const aiController = require('../controllers/aiController');
+const jwt = require('../utils/jwt');
 
-// Optional auth helper: if token is present, decode it and attach user; if not, proceed as guest
+// Optional auth helper: decodes Bearer token if present to attach user context
 const optionalAuth = (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (authHeader && authHeader.startsWith('Bearer ')) {
     try {
-      const jwt = require('../utils/jwt');
       const token = authHeader.split(' ')[1];
       const decoded = jwt.verifyToken(token);
       if (decoded) {
         req.user = decoded;
       }
     } catch (e) {
-      // Proceed as unauthenticated guest if token is invalid
+      // Proceed as guest if token expired
     }
   }
   next();

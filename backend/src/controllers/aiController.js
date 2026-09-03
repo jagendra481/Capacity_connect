@@ -2,11 +2,11 @@ const aiService = require('../services/aiService');
 const response = require('../utils/response');
 
 /**
- * Chat endpoint handling user prompts from both AIAssistant widget and AILearningAssistant page
+ * AI Chat Endpoint (POST /api/ai/chat)
  */
 const chat = async (req, res, next) => {
   try {
-    const { prompt, message, courseId, mode, history } = req.body;
+    const { prompt, message, courseId, moduleId, lessonId, mode, conversationId, history } = req.body;
     const query = prompt || message;
 
     if (!query || typeof query !== 'string' || !query.trim()) {
@@ -16,37 +16,42 @@ const chat = async (req, res, next) => {
     const data = await aiService.chat({
       prompt: query.trim(),
       message: query.trim(),
-      courseId,
+      courseId: courseId || null,
+      moduleId: moduleId || null,
+      lessonId: lessonId || null,
       mode: mode || 'general',
-      history: history || [],
-      user: req.user || null
+      conversationId: conversationId || null,
+      history: Array.isArray(history) ? history : [],
+      user: req.user || null,
     });
 
-    return response.success(res, {
-      ...data,
-      reply: data.answer || data.reply,
-      answer: data.answer || data.reply
-    }, 'AI response generated successfully', 200);
+    return response.success(res, data, 'AI response generated successfully', 200);
   } catch (error) {
     next(error);
   }
 };
 
+/**
+ * Practice Questions Endpoint (GET /api/ai/practice-questions)
+ */
 const getPracticeQuestions = async (req, res, next) => {
   try {
     const { topic } = req.query;
     const data = await aiService.generatePracticeQuestions(topic);
-    return response.success(res, data, 'Practice questions generated', 200);
+    return response.success(res, data, 'Practice questions generated successfully', 200);
   } catch (error) {
     next(error);
   }
 };
 
+/**
+ * Flashcards Endpoint (GET /api/ai/flashcards)
+ */
 const getFlashcards = async (req, res, next) => {
   try {
     const { topic } = req.query;
     const data = await aiService.generateFlashcards(topic);
-    return response.success(res, data, 'Flashcards generated', 200);
+    return response.success(res, data, 'Flashcards generated successfully', 200);
   } catch (error) {
     next(error);
   }

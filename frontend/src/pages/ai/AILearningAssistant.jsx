@@ -1,43 +1,73 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import aiService from '../../services/aiService';
-import { Bot, Send, Sparkles, BookOpen, HelpCircle, Layers, FileText, CheckCircle2, RotateCw } from 'lucide-react';
+import courseService from '../../services/courseService';
+import { Bot, Send, Sparkles, BookOpen, HelpCircle, Layers, FileText, CheckCircle2, RotateCw, Lightbulb, MessageSquare } from 'lucide-react';
 
 export const AILearningAssistant = () => {
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      sender: 'ai',
-      text: 'Hello! I am your AI Learning Assistant. You can ask me questions directly from your enrolled course materials, request simplified explanations, or generate practice flashcards.',
-      sources: [],
-    },
-  ]);
+  const [searchParams] = useSearchParams();
+  const urlCourseId = searchParams.get('courseId');
+
+  const [course, setCourse] = useState(null);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [mode, setMode] = useState('general'); // general, explain, summarize
   const [loading, setLoading] = useState(false);
+  const [conversationId, setConversationId] = useState(null);
 
   // Flashcards & Questions State
   const [flashcards, setFlashcards] = useState([]);
   const [practiceQuestions, setPracticeQuestions] = useState([]);
   const [activeTab, setActiveTab] = useState('chat'); // chat, flashcards, practice
 
-  const handleSend = async (e) => {
-    e.preventDefault();
-    if (!input.trim() || loading) return;
+  // Load course details if courseId is passed in URL
+  useEffect(() => {
+    if (urlCourseId) {
+      courseService.getCourseById(urlCourseId)
+        .then(res => {
+          if (res.data) setCourse(res.data);
+        })
+        .catch(err => console.error(err));
+    }
+  }, [urlCourseId]);
 
-    const userMsg = { id: Date.now(), sender: 'user', text: input };
+  // Initial welcome message
+  useEffect(() => {
+    const welcomeText = urlCourseId && course
+      ? `👋 Welcome to **${course.title}** AI Assistant!\n\nI am grounded in your course materials. You can ask me to explain concepts from this course, generate flashcards, or create practice questions.`
+      : '👋 Hello! I am your **Capacity Connect AI Assistant**.\n\nYou can ask me questions directly from your enrolled course materials, request simplified concept explanations, analyze skill gaps, or generate practice flashcards.';
+
+    setMessages([
+      {
+        id: 1,
+        sender: 'ai',
+        text: welcomeText,
+        sources: [],
+      },
+    ]);
+  }, [urlCourseId, course]);
+
+  const handleSend = async (e, customText = null) => {
+    if (e) e.preventDefault();
+    const queryText = customText || input;
+    if (!queryText || !queryText.trim() || loading) return;
+
+    const userMsg = { id: Date.now(), sender: 'user', text: queryText.trim() };
     setMessages(prev => [...prev, userMsg]);
-    const currentInput = input;
-    setInput('');
+    if (!customText) setInput('');
     setLoading(true);
 
     try {
-      const res = await aiService.chat(currentInput, null, mode);
-      if (res.data) {
+      const res = await aiService.chat(queryText.trim(), urlCourseId, mode, { conversationId });
+      const botData = res.data || res;
+      if (botData) {
+        if (botData.conversationId) setConversationId(botData.conversationId);
+
         const aiMsg = {
           id: Date.now() + 1,
           sender: 'ai',
-          text: res.data.answer,
-          sources: res.data.sources || [],
+          text: botData.answer || botData.reply,
+          sources: botData.sources || [],
         };
         setMessages(prev => [...prev, aiMsg]);
       }
@@ -48,7 +78,7 @@ export const AILearningAssistant = () => {
         {
           id: Date.now() + 1,
           sender: 'ai',
-          text: 'I encountered an issue processing your request. Please try asking again.',
+          text: 'Sorry, I couldn\'t process that request right now. Please try again.',
           sources: [],
         },
       ]);
@@ -60,7 +90,8 @@ export const AILearningAssistant = () => {
   const handleLoadFlashcards = async () => {
     setActiveTab('flashcards');
     if (flashcards.length === 0) {
-      const res = await aiService.getFlashcards('React & Node Architecture');
+      const topic = course ? course.title : 'Software Engineering & Competencies';
+      const res = await aiService.getFlashcards(topic);
       if (res.data) setFlashcards(res.data);
     }
   };
@@ -68,24 +99,51 @@ export const AILearningAssistant = () => {
   const handleLoadPracticeQuestions = async () => {
     setActiveTab('practice');
     if (practiceQuestions.length === 0) {
-      const res = await aiService.getPracticeQuestions('Enterprise Software Engineering');
+      const topic = course ? course.title : 'Enterprise Software Systems';
+      const res = await aiService.getPracticeQuestions(topic);
       if (res.data) setPracticeQuestions(res.data);
     }
   };
+
+  const quickActionChips = urlCourseId && course ? [
+    'Explain key concepts from this course',
+    'Summarize this course',
+    'Give me practice questions',
+    'What are my skill gaps?',
+    'Create flashcards',
+  ] : [
+    'What is competency?',
+    'What should I learn next?',
+    'Give me practice questions',
+    'Summarize my progress',
+    'Create flashcards',
+  ];
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       {/* Header Banner */}
       <div className="bg-gradient-to-r from-purple-950 via-slate-900 to-slate-900 border border-purple-500/30 rounded-2xl p-6 md:p-8 shadow-2xl space-y-3">
-        <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs font-semibold border border-purple-500/30">
-          <Bot className="w-4 h-4" />
-          <span>RAG-Powered AI Learning Assistant</span>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs font-semibold border border-purple-500/30">
+            <Bot className="w-4 h-4 text-cyan-400" />
+            <span>Capacity Connect Smart AI Assistant</span>
+          </div>
+
+          {course && (
+            <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-300 text-xs font-bold border border-cyan-500/30">
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>Grounded Course: {course.title}</span>
+            </div>
+          )}
         </div>
+
         <h1 className="text-2xl md:text-3xl font-extrabold text-white">
-          Course Intelligence & Knowledge Assistant
+          {course ? `Course AI Assistant: ${course.title}` : 'Smart Integrated AI Learning Assistant'}
         </h1>
         <p className="text-sm text-slate-300 max-w-3xl">
-          Ask questions prioritized against approved course materials, generate flashcards, and request simplified concept breakdowns with source references.
+          {course
+            ? `Ask questions grounded directly in "${course.title}". Get source-cited answers, concept summaries, and practice quizzes.`
+            : 'Ask questions about your courses, competencies, skill gaps, or practice questions with AI grounded responses.'}
         </p>
 
         {/* Tab Navigation */}
@@ -127,7 +185,7 @@ export const AILearningAssistant = () => {
       </div>
 
       {activeTab === 'chat' && (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col h-[520px]">
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col h-[540px]">
           {/* Mode Selector */}
           <div className="p-3 bg-slate-950 border-b border-slate-800 flex items-center justify-between px-6">
             <span className="text-xs font-semibold text-slate-400">Response Mode:</span>
@@ -195,18 +253,33 @@ export const AILearningAssistant = () => {
             {loading && (
               <div className="flex items-center space-x-2 text-xs text-purple-400 bg-purple-950/20 p-3 rounded-xl border border-purple-500/20 w-max">
                 <RotateCw className="w-4 h-4 animate-spin" />
-                <span>Retrieving course materials and generating answer...</span>
+                <span>Analyzing your question & retrieving relevant material...</span>
               </div>
             )}
           </div>
 
+          {/* Quick Action Suggestion Chips */}
+          <div className="px-6 py-2 bg-slate-950/80 border-t border-slate-800/60 flex items-center space-x-2 overflow-x-auto">
+            <Lightbulb className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+            <span className="text-[10px] uppercase font-bold text-slate-500 flex-shrink-0">Suggestions:</span>
+            {quickActionChips.map((chip, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleSend(null, chip)}
+                className="px-2.5 py-1 bg-slate-900 hover:bg-purple-900/40 text-slate-300 hover:text-white rounded-lg text-[11px] font-medium border border-slate-800 transition-colors flex-shrink-0"
+              >
+                {chip}
+              </button>
+            ))}
+          </div>
+
           {/* Chat Form */}
-          <form onSubmit={handleSend} className="p-4 bg-slate-950 border-t border-slate-800 flex items-center space-x-3">
+          <form onSubmit={(e) => handleSend(e)} className="p-4 bg-slate-950 border-t border-slate-800 flex items-center space-x-3">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask any question about your enrolled courses..."
+              placeholder={course ? `Ask a question about ${course.title}...` : 'Ask any question about your enrolled courses or competencies...'}
               className="flex-1 bg-slate-900 border border-slate-800 rounded-xl py-3 px-4 text-xs text-slate-100 focus:outline-none focus:border-purple-500 transition-colors"
             />
             <button
@@ -223,7 +296,7 @@ export const AILearningAssistant = () => {
 
       {/* AI Flashcards View */}
       {activeTab === 'flashcards' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {flashcards.map((card) => (
             <div key={card.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4 flex flex-col justify-between">
               <div className="space-y-2">

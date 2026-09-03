@@ -4,7 +4,7 @@ import courseService from '../../services/courseService';
 import ModuleList from '../../components/courses/ModuleList';
 import CourseProgress from '../../components/courses/CourseProgress';
 import Loader from '../../components/common/Loader';
-import { Clock, BookOpen, User, ArrowLeft, PlayCircle, CheckCircle2, Award } from 'lucide-react';
+import { Clock, BookOpen, User, ArrowLeft, PlayCircle, Award, Bot, Sparkles } from 'lucide-react';
 
 export const CourseDetails = () => {
   const { id } = useParams();
@@ -62,7 +62,7 @@ export const CourseDetails = () => {
             </div>
           </div>
 
-          <div className="w-full lg:w-80 flex-shrink-0 space-y-4">
+          <div className="w-full lg:w-80 flex-shrink-0 space-y-3">
             <CourseProgress completedLessons={2} totalLessons={5} />
             <Link
               to={`/courses/${id}/lessons/${firstLessonId}`}
@@ -70,6 +70,16 @@ export const CourseDetails = () => {
             >
               <PlayCircle className="w-5 h-5" />
               <span>Continue Learning</span>
+            </Link>
+
+            {/* Core Feature: Ask from my course button */}
+            <Link
+              to={`/ai/assistant?courseId=${id}`}
+              className="w-full py-2.5 bg-purple-950/60 hover:bg-purple-900/60 text-purple-300 border border-purple-500/30 text-xs font-bold rounded-xl transition-all flex items-center justify-center space-x-2"
+            >
+              <Bot className="w-4 h-4 text-cyan-400" />
+              <span>Ask from my course</span>
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
             </Link>
           </div>
         </div>

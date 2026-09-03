@@ -46,7 +46,9 @@ const memoryStore = {
   trainingSessions: [],
   registrations: [],
   certificates: [],
-  notifications: []
+  notifications: [],
+  aiConversations: [],
+  aiMessages: []
 };
 
 // Seed initial memory store demo data
@@ -62,6 +64,7 @@ const initializeMemoryStore = async () => {
       role: 'trainee',
       department_id: 1,
       full_name: 'Alex Johnson',
+      email_verified: true,
       status: 'active',
       created_at: new Date().toISOString()
     },
@@ -72,6 +75,7 @@ const initializeMemoryStore = async () => {
       role: 'trainer',
       department_id: 1,
       full_name: 'Dr. Sarah Connor',
+      email_verified: true,
       status: 'active',
       created_at: new Date().toISOString()
     },
@@ -82,6 +86,7 @@ const initializeMemoryStore = async () => {
       role: 'administrator',
       department_id: 4,
       full_name: 'Marcus Vance',
+      email_verified: true,
       status: 'active',
       created_at: new Date().toISOString()
     }
@@ -114,6 +119,65 @@ const initializeMemoryStore = async () => {
       xp: 2500,
       streak_days: 30,
       competency_score: 98
+    }
+  ];
+
+  memoryStore.courses = [
+    {
+      id: 1,
+      title: 'Full-Stack Enterprise Architecture & Microservices',
+      description: 'Master enterprise software engineering with React, Node.js, Microservices, Clean Architecture, and Kubernetes.',
+      category: 'Software Engineering',
+      level: 'Intermediate',
+      duration: '12 Hours',
+      prerequisites: 'Basic JavaScript & Web Fundamentals',
+      trainer_name: 'Dr. Sarah Connor',
+    },
+    {
+      id: 2,
+      title: 'Data Science & Machine Learning Pipeline Engineering',
+      description: 'Build end-to-end data processing pipelines using Python, SQL, Kafka, BigQuery, and Machine Learning models.',
+      category: 'Data Science & AI',
+      level: 'Advanced',
+      duration: '16 Hours',
+      prerequisites: 'Python & Linear Algebra',
+      trainer_name: 'Dr. Sarah Connor',
+    }
+  ];
+
+  memoryStore.courseModules = [
+    { id: 101, course_id: 1, title: 'Module 1: Clean Architecture & API Design', module_order: 1 },
+    { id: 102, course_id: 1, title: 'Module 2: State Management & Microservices', module_order: 2 },
+    { id: 201, course_id: 2, title: 'Module 1: Data Pipelines & Feature Engineering', module_order: 1 },
+  ];
+
+  memoryStore.lessons = [
+    {
+      id: 1001,
+      module_id: 101,
+      module_title: 'Module 1: Clean Architecture & API Design',
+      lesson_order: 1,
+      title: 'Clean Architecture Principles & Domain Decoupling',
+      content: 'Clean Architecture decouples core business domain logic from UI components, database drivers, and third-party frameworks using entity layers and dependency inversion.',
+      summary: 'Clean architecture isolates enterprise business rules from framework changes.',
+    },
+    {
+      id: 1002,
+      module_id: 101,
+      module_title: 'Module 1: Clean Architecture & API Design',
+      lesson_order: 2,
+      title: 'RESTful API Standards & JWT Security Protocols',
+      content: 'REST APIs utilize HTTP methods (GET, POST, PUT, DELETE) with Bearer token authentication to enforce stateless role-based authorization headers.',
+      summary: 'Bearer JWT tokens secure backend APIs across distributed microservices.',
+    },
+    {
+      id: 1003,
+      module_id: 102,
+      module_title: 'Module 2: State Management & Microservices',
+      lesson_order: 1,
+      title: 'Microservices Communication & Event-Driven Systems',
+      content: 'Microservices communicate asynchronously via message queues such as Kafka or RabbitMQ, ensuring domain decoupling and fault-tolerant scalability.',
+      summary: 'Event-driven systems use message brokers for high-throughput microservices.',
     }
   ];
 };
