@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import aiService from '../../services/aiService';
 import courseService from '../../services/courseService';
-import { Bot, Send, Sparkles, BookOpen, HelpCircle, Layers, FileText, CheckCircle2, RotateCw, Lightbulb, MessageSquare } from 'lucide-react';
+import FormattedMarkdown from '../../components/common/FormattedMarkdown';
+import { Bot, Send, Sparkles, BookOpen, HelpCircle, Layers, FileText, CheckCircle2, RotateCw, Lightbulb, User } from 'lucide-react';
 
 export const AILearningAssistant = () => {
   const [searchParams] = useSearchParams();
@@ -19,6 +20,12 @@ export const AILearningAssistant = () => {
   const [flashcards, setFlashcards] = useState([]);
   const [practiceQuestions, setPracticeQuestions] = useState([]);
   const [activeTab, setActiveTab] = useState('chat'); // chat, flashcards, practice
+
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   // Load course details if courseId is passed in URL
   useEffect(() => {
@@ -46,6 +53,10 @@ export const AILearningAssistant = () => {
       },
     ]);
   }, [urlCourseId, course]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, loading]);
 
   const handleSend = async (e, customText = null) => {
     if (e) e.preventDefault();
@@ -120,9 +131,9 @@ export const AILearningAssistant = () => {
   ];
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="w-full max-w-5xl mx-auto px-2 sm:px-4 space-y-6">
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-purple-950 via-slate-900 to-slate-900 border border-purple-500/30 rounded-2xl p-6 md:p-8 shadow-2xl space-y-3">
+      <div className="bg-gradient-to-r from-purple-950 via-slate-900 to-slate-900 border border-purple-500/30 rounded-2xl p-5 md:p-8 shadow-2xl space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs font-semibold border border-purple-500/30">
             <Bot className="w-4 h-4 text-cyan-400" />
@@ -137,20 +148,20 @@ export const AILearningAssistant = () => {
           )}
         </div>
 
-        <h1 className="text-2xl md:text-3xl font-extrabold text-white">
+        <h1 className="text-xl md:text-3xl font-extrabold text-white">
           {course ? `Course AI Assistant: ${course.title}` : 'Smart Integrated AI Learning Assistant'}
         </h1>
-        <p className="text-sm text-slate-300 max-w-3xl">
+        <p className="text-xs md:text-sm text-slate-300 max-w-3xl leading-relaxed">
           {course
             ? `Ask questions grounded directly in "${course.title}". Get source-cited answers, concept summaries, and practice quizzes.`
             : 'Ask questions about your courses, competencies, skill gaps, or practice questions with AI grounded responses.'}
         </p>
 
         {/* Tab Navigation */}
-        <div className="flex items-center space-x-2 pt-2">
+        <div className="flex flex-wrap items-center gap-2 pt-2">
           <button
             onClick={() => setActiveTab('chat')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 ${
               activeTab === 'chat'
                 ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20'
                 : 'bg-slate-900 text-slate-400 hover:bg-slate-800'
@@ -161,7 +172,7 @@ export const AILearningAssistant = () => {
           </button>
           <button
             onClick={handleLoadFlashcards}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 ${
               activeTab === 'flashcards'
                 ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20'
                 : 'bg-slate-900 text-slate-400 hover:bg-slate-800'
@@ -172,7 +183,7 @@ export const AILearningAssistant = () => {
           </button>
           <button
             onClick={handleLoadPracticeQuestions}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 ${
               activeTab === 'practice'
                 ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/20'
                 : 'bg-slate-900 text-slate-400 hover:bg-slate-800'
@@ -185,14 +196,14 @@ export const AILearningAssistant = () => {
       </div>
 
       {activeTab === 'chat' && (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col h-[540px]">
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col h-[580px] w-full">
           {/* Mode Selector */}
-          <div className="p-3 bg-slate-950 border-b border-slate-800 flex items-center justify-between px-6">
+          <div className="p-3 bg-slate-950 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 px-4 md:px-6">
             <span className="text-xs font-semibold text-slate-400">Response Mode:</span>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1.5 sm:space-x-2">
               <button
                 onClick={() => setMode('general')}
-                className={`px-3 py-1 text-xs rounded-lg font-semibold transition-colors ${
+                className={`px-2.5 py-1 text-xs rounded-lg font-semibold transition-colors ${
                   mode === 'general' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:bg-slate-800'
                 }`}
               >
@@ -200,7 +211,7 @@ export const AILearningAssistant = () => {
               </button>
               <button
                 onClick={() => setMode('explain')}
-                className={`px-3 py-1 text-xs rounded-lg font-semibold transition-colors ${
+                className={`px-2.5 py-1 text-xs rounded-lg font-semibold transition-colors ${
                   mode === 'explain' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:bg-slate-800'
                 }`}
               >
@@ -208,7 +219,7 @@ export const AILearningAssistant = () => {
               </button>
               <button
                 onClick={() => setMode('summarize')}
-                className={`px-3 py-1 text-xs rounded-lg font-semibold transition-colors ${
+                className={`px-2.5 py-1 text-xs rounded-lg font-semibold transition-colors ${
                   mode === 'summarize' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:bg-slate-800'
                 }`}
               >
@@ -218,55 +229,72 @@ export const AILearningAssistant = () => {
           </div>
 
           {/* Messages Stream */}
-          <div className="flex-1 p-6 overflow-y-auto space-y-4">
+          <div className="flex-1 p-4 md:p-6 overflow-y-auto space-y-4 w-full">
             {messages.map((m) => (
               <div
                 key={m.id}
-                className={`flex flex-col ${m.sender === 'user' ? 'items-end' : 'items-start'}`}
+                className={`flex flex-col ${m.sender === 'user' ? 'items-end' : 'items-start'} w-full`}
               >
-                <div
-                  className={`max-w-2xl rounded-2xl p-4 text-xs leading-relaxed shadow-md ${
-                    m.sender === 'user'
-                      ? 'bg-purple-600 text-white rounded-br-none'
-                      : 'bg-slate-950 border border-slate-800 text-slate-200 rounded-bl-none'
-                  }`}
-                >
-                  <div className="whitespace-pre-line">{m.text}</div>
+                <div className="flex gap-2.5 items-start max-w-full md:max-w-[85%]">
+                  {m.sender === 'ai' && (
+                    <div className="w-7 h-7 rounded-xl bg-purple-600/30 border border-purple-500/40 text-purple-300 flex items-center justify-center flex-shrink-0 mt-1">
+                      <Bot className="w-4 h-4" />
+                    </div>
+                  )}
 
-                  {/* RAG Source Citations */}
-                  {m.sources && m.sources.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-slate-800/80 text-[11px] text-purple-300 space-y-1">
-                      <p className="font-bold flex items-center space-x-1">
-                        <BookOpen className="w-3.5 h-3.5" />
-                        <span>Source References:</span>
-                      </p>
-                      {m.sources.map((s, idx) => (
-                        <p key={idx} className="text-slate-400">
-                          📚 {s.courseTitle} — <span className="text-slate-300 font-semibold">{s.source}</span>
+                  <div
+                    className={`rounded-2xl p-4 text-xs md:text-sm leading-relaxed shadow-md w-full overflow-hidden break-words ${
+                      m.sender === 'user'
+                        ? 'bg-purple-600 text-white rounded-br-none ml-auto'
+                        : 'bg-slate-950 border border-slate-800 text-slate-200 rounded-bl-none'
+                    }`}
+                  >
+                    {/* Render Formatted Markdown */}
+                    <FormattedMarkdown content={m.text} />
+
+                    {/* RAG Source Citations */}
+                    {m.sources && m.sources.length > 0 && (
+                      <div className="mt-3 pt-3 border-t border-slate-800/80 text-[11px] text-purple-300 space-y-1">
+                        <p className="font-bold flex items-center space-x-1">
+                          <BookOpen className="w-3.5 h-3.5 text-cyan-400" />
+                          <span>Source References:</span>
                         </p>
-                      ))}
+                        {m.sources.map((s, idx) => (
+                          <p key={idx} className="text-slate-400">
+                            📚 {s.courseTitle} — <span className="text-slate-300 font-semibold">{s.source}</span>
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {m.sender === 'user' && (
+                    <div className="w-7 h-7 rounded-xl bg-indigo-600 text-white flex items-center justify-center flex-shrink-0 mt-1">
+                      <User className="w-4 h-4" />
                     </div>
                   )}
                 </div>
               </div>
             ))}
+
             {loading && (
               <div className="flex items-center space-x-2 text-xs text-purple-400 bg-purple-950/20 p-3 rounded-xl border border-purple-500/20 w-max">
                 <RotateCw className="w-4 h-4 animate-spin" />
                 <span>Analyzing your question & retrieving relevant material...</span>
               </div>
             )}
+            <div ref={messagesEndRef} />
           </div>
 
           {/* Quick Action Suggestion Chips */}
-          <div className="px-6 py-2 bg-slate-950/80 border-t border-slate-800/60 flex items-center space-x-2 overflow-x-auto">
-            <Lightbulb className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+          <div className="px-4 md:px-6 py-2.5 bg-slate-950/90 border-t border-slate-800/60 flex items-center space-x-2 overflow-x-auto w-full">
+            <Lightbulb className="w-4 h-4 text-amber-400 flex-shrink-0" />
             <span className="text-[10px] uppercase font-bold text-slate-500 flex-shrink-0">Suggestions:</span>
             {quickActionChips.map((chip, idx) => (
               <button
                 key={idx}
                 onClick={() => handleSend(null, chip)}
-                className="px-2.5 py-1 bg-slate-900 hover:bg-purple-900/40 text-slate-300 hover:text-white rounded-lg text-[11px] font-medium border border-slate-800 transition-colors flex-shrink-0"
+                className="px-3 py-1.5 bg-slate-900 hover:bg-purple-900/40 text-slate-300 hover:text-white rounded-lg text-xs font-medium border border-slate-800 transition-colors flex-shrink-0 whitespace-nowrap"
               >
                 {chip}
               </button>
@@ -274,18 +302,18 @@ export const AILearningAssistant = () => {
           </div>
 
           {/* Chat Form */}
-          <form onSubmit={(e) => handleSend(e)} className="p-4 bg-slate-950 border-t border-slate-800 flex items-center space-x-3">
+          <form onSubmit={(e) => handleSend(e)} className="p-3 md:p-4 bg-slate-950 border-t border-slate-800 flex items-center space-x-2 md:space-x-3 w-full">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder={course ? `Ask a question about ${course.title}...` : 'Ask any question about your enrolled courses or competencies...'}
-              className="flex-1 bg-slate-900 border border-slate-800 rounded-xl py-3 px-4 text-xs text-slate-100 focus:outline-none focus:border-purple-500 transition-colors"
+              className="flex-1 bg-slate-900 border border-slate-800 rounded-xl py-3 px-4 text-xs md:text-sm text-slate-100 focus:outline-none focus:border-purple-500 transition-colors"
             />
             <button
               type="submit"
               disabled={loading || !input.trim()}
-              className="px-5 py-3 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-purple-600/20 flex items-center space-x-1.5"
+              className="px-4 md:px-5 py-3 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-purple-600/20 flex items-center space-x-1.5 flex-shrink-0"
             >
               <span>Send</span>
               <Send className="w-4 h-4" />
@@ -296,7 +324,7 @@ export const AILearningAssistant = () => {
 
       {/* AI Flashcards View */}
       {activeTab === 'flashcards' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
           {flashcards.map((card) => (
             <div key={card.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4 flex flex-col justify-between">
               <div className="space-y-2">
@@ -315,7 +343,7 @@ export const AILearningAssistant = () => {
 
       {/* Practice Questions View */}
       {activeTab === 'practice' && (
-        <div className="space-y-4">
+        <div className="space-y-4 w-full">
           {practiceQuestions.map((q, idx) => (
             <div key={idx} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
               <h4 className="text-base font-bold text-slate-100">{q.question}</h4>

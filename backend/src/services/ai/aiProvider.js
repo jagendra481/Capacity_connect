@@ -36,7 +36,7 @@ class AIProvider {
 
     const contents = [];
     
-    // Add system instruction as first user/model context exchange or system instruction
+    // Add system instruction as first user context exchange
     const fullUserPrompt = `${systemPrompt}\n\nUSER QUESTION: ${prompt}`;
     contents.push({ role: 'user', parts: [{ text: fullUserPrompt }] });
 
@@ -108,7 +108,18 @@ class AIProvider {
     const q = (prompt || '').trim();
     const qLower = q.toLowerCase();
 
-    // Grounding Check for Course Material
+    // 0. Conversational Greetings & Identity
+    if (/^(hi|hello|hey|greetings|good\s*(morning|afternoon|evening)|who are you|what can you do)/i.test(qLower) && !qLower.includes('competency') && !qLower.includes('skill') && !qLower.includes('course')) {
+      const userName = userContext?.name ? ` ${userContext.name}` : '';
+      return `👋 Hello${userName}! I am your **Capacity Connect AI Assistant**.\n\nI can help you across the platform with:\n\n` +
+        `• 📚 **Course Intelligence**: Answer questions directly from your enrolled course materials.\n` +
+        `• 🎯 **Competencies & Skill Gaps**: Analyze your growth areas and recommended learning paths.\n` +
+        `• 📝 **Practice MCQs & Flashcards**: Generate study cards and interactive quiz questions.\n` +
+        `• 💡 **Concept Summaries**: Break down complex technical architecture into easy explanations.\n\n` +
+        `What would you like to explore today?`;
+    }
+
+    // 1. Grounding Check for Course Material
     if (courseContext && courseContext.isCourseContextAvailable && courseContext.relevantPassages.length > 0) {
       const passage = courseContext.relevantPassages[0];
       
@@ -127,7 +138,7 @@ class AIProvider {
       }
     }
 
-    // Intent: PRACTICE / EXAM
+    // 2. Intent: PRACTICE / EXAM
     if (intent === 'PRACTICE' || intent === 'EXAM') {
       const topic = q.replace(/give me|practice|questions|mcqs|on|for/gi, '').trim() || 'Software Engineering & Competencies';
       return `### 📝 Practice Questions: ${topic}\n\n` +
@@ -145,7 +156,7 @@ class AIProvider {
         `*Correct Answer*: **A** — Skill Gaps calculate your target growth areas.`;
     }
 
-    // Intent: FLASHCARDS
+    // 3. Intent: FLASHCARDS
     if (intent === 'FLASHCARDS') {
       return `### 🎴 Concept Flashcards\n\n` +
         `**Flashcard 1**\n` +
@@ -156,7 +167,7 @@ class AIProvider {
         `• **Back**: Ensuring the AI prioritizes verified course materials over unverified general assumptions.`;
     }
 
-    // Intent: SIMPLIFY
+    // 4. Intent: SIMPLIFY
     if (intent === 'SIMPLIFY') {
       return `### 💡 Simple Explanation\n\n` +
         `Think of **${q.replace(/explain|simply|like i'm a beginner|what is/gi, '').trim() || 'this concept'}** like building with LEGO blocks:\n\n` +
@@ -165,7 +176,7 @@ class AIProvider {
         `3. **The Result**: Together, they create a strong, clean platform!`;
     }
 
-    // Intent: SUMMARY
+    // 5. Intent: SUMMARY
     if (intent === 'SUMMARY') {
       return `### 📋 Summary Breakdown\n\n` +
         `Here are the key takeaways for **"${q}"**:\n\n` +
@@ -174,7 +185,7 @@ class AIProvider {
         `• **Next Steps**: Test your knowledge on My Assessments to track progress.`;
     }
 
-    // Intent: RECOMMENDATION
+    // 6. Intent: RECOMMENDATION
     if (intent === 'RECOMMENDATION') {
       const nameStr = userContext?.name ? ` ${userContext.name}` : '';
       let recs = `### 🎯 Personalized Learning Recommendations${nameStr}\n\n`;
@@ -189,7 +200,7 @@ class AIProvider {
       return recs;
     }
 
-    // General Educational Concept Explanation
+    // 7. General Educational Concept Explanation
     if (qLower.includes('competency')) {
       return `### 🎯 What is Competency?\n\n` +
         `**Competency** in Capacity Connect refers to the measurable combination of knowledge, skills, and practical abilities required to perform a role effectively.\n\n` +
@@ -200,7 +211,7 @@ class AIProvider {
         `💡 *In Capacity Connect, your competency score updates dynamically as you complete lessons and quizzes!*`;
     }
 
-    // Default High-Quality Educational Fallback Response
+    // 8. Default High-Quality Educational Fallback Response
     return `### 💡 Educational Overview\n\n` +
       `Regarding **"${q}"**:\n\n` +
       `In digital learning and capacity development, understanding **"${q}"** involves applying structured principles, completing guided lessons, and evaluating your progress through assessments.\n\n` +
