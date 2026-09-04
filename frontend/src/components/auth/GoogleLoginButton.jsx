@@ -5,7 +5,7 @@ export const GoogleLoginButton = ({ onGoogleSuccess, onError, label = 'Continue 
   const [gisLoaded, setGisLoaded] = useState(false);
 
   useEffect(() => {
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '382657497984-5d9hmrdb3974pn0dm8pnr9t8k5pdbbgo.apps.googleusercontent.com';
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '581951726124-9oj663akvjv8kv6nulmuudv5ikr4tbr4.apps.googleusercontent.com';
 
     const loadGoogleSdk = () => {
       if (window.google?.accounts?.id) {

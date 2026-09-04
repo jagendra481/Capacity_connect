@@ -13,6 +13,6 @@ module.exports = {
   aiProvider: process.env.AI_PROVIDER || 'gemini',
   aiApiKey: process.env.AI_API_KEY || process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY || '',
   aiModel: process.env.AI_MODEL || 'gemini-2.0-flash',
-  googleClientId: process.env.GOOGLE_CLIENT_ID || '',
+  googleClientId: process.env.GOOGLE_CLIENT_ID || '581951726124-9oj663akvjv8kv6nulmuudv5ikr4tbr4.apps.googleusercontent.com',
   googleClientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
 };
