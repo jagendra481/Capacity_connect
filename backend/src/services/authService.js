@@ -5,21 +5,9 @@ const emailService = require('./emailService');
 const { hashPassword, comparePassword } = require('../utils/password');
 const { generateToken } = require('../utils/jwt');
 const env = require('../config/env');
-const logger = require('../utils/logger');
 
 class AuthService {
-  async signup(data, ...rest) {
-    const payload = typeof data === 'object' && data !== null
-      ? data
-      : { email: data, password: rest[0], full_name: rest[1], role: rest[2] };
-    return this.register(payload);
-  }
-
-  async register(data, ...rest) {
-    const payload = typeof data === 'object' && data !== null
-      ? data
-      : { email: data, password: rest[0], full_name: rest[1], role: rest[2] };
-    const { email, password, full_name, role = 'trainee', department_id = 1, designation = null, employee_student_id = null } = payload;
+  async register({ email, password, full_name, role = 'trainee', department_id = 1, designation = null, employee_student_id = null }) {
     if (!email || !password || !full_name) {
       const err = new Error('Full name, email, and password are required.');
       err.statusCode = 400;
@@ -44,23 +32,18 @@ class AuthService {
         purpose: 'email_verification',
       });
 
-      // Send email synchronously to ensure delivery status
-      const emailResult = await emailService.sendVerificationOTP({
+      // Send email asynchronously
+      emailService.sendVerificationOTP({
         email: existingUser.email,
         otp: otpData.otpCode,
         purpose: 'email_verification',
       });
-
-      if (!emailResult.success) {
-        logger.error(`[AUTH] Failed to send verification email: ${emailResult.error}`);
-      }
 
       return {
         success: true,
         requiresEmailVerification: true,
         email: existingUser.email,
         otpSentTimestamp: otpData.createdAt,
-        emailDelivered: emailResult.success,
         message: 'An unverified account with this email already exists. A new verification code has been sent.',
       };
     }
@@ -80,37 +63,30 @@ class AuthService {
       email_verified: false,
     });
 
-    // Generate OTP (enforces 30s cooldown & crypto random 6-digit generation)
+    // Generate OTP (enforces 30s cooldown)
     const otpData = await OTPModel.createOTP({
       userId: user.id,
       email: user.email,
       purpose: 'email_verification',
     });
 
-    // Send email synchronously to ensure delivery status
-    const emailResult = await emailService.sendVerificationOTP({
+    // Send email asynchronously
+    emailService.sendVerificationOTP({
       email: user.email,
       otp: otpData.otpCode,
       purpose: 'email_verification',
     });
-
-    if (!emailResult.success) {
-      logger.error(`[AUTH] Failed to send verification email: ${emailResult.error}`);
-    }
 
     return {
       success: true,
       requiresEmailVerification: true,
       email: user.email,
       otpSentTimestamp: otpData.createdAt,
-      emailDelivered: emailResult.success,
       message: 'Verification code sent successfully. We have sent a 6-digit verification code to your email address.',
     };
   }
 
-  async verifyEmailOTP(data, argOtp) {
-    const payload = typeof data === 'object' && data !== null ? data : { email: data, otp: argOtp };
-    const { email, otp } = payload;
+  async verifyEmailOTP({ email, otp }) {
     if (!email || !otp) {
       const err = new Error('Email address and 6-digit verification code are required.');
       err.statusCode = 400;
@@ -161,9 +137,7 @@ class AuthService {
     };
   }
 
-  async resendOTP(data, argPurpose) {
-    const payload = typeof data === 'object' && data !== null ? data : { email: data, purpose: argPurpose };
-    const { email, purpose = 'email_verification' } = payload;
+  async resendOTP({ email, purpose = 'email_verification' }) {
     if (!email) {
       const err = new Error('Email address is required.');
       err.statusCode = 400;
@@ -188,8 +162,8 @@ class AuthService {
       purpose,
     });
 
-    // Send email
-    const emailResult = await emailService.sendVerificationOTP({
+    // Send email asynchronously
+    emailService.sendVerificationOTP({
       email: user.email,
       otp: otpData.otpCode,
       purpose,
@@ -198,14 +172,11 @@ class AuthService {
     return {
       success: true,
       otpSentTimestamp: otpData.createdAt,
-      emailDelivered: emailResult.success,
       message: 'New verification code sent.',
     };
   }
 
-  async login(data, argPass) {
-    const payload = typeof data === 'object' && data !== null ? data : { email: data, password: argPass };
-    const { email, password } = payload;
+  async login({ email, password }) {
     if (!email || !password) {
       const err = new Error('Email and password are required.');
       err.statusCode = 400;
@@ -240,7 +211,7 @@ class AuthService {
           purpose: 'email_verification',
         });
 
-        await emailService.sendVerificationOTP({
+        emailService.sendVerificationOTP({
           email: user.email,
           otp: otpData.otpCode,
           purpose: 'email_verification',
@@ -334,12 +305,7 @@ class AuthService {
     };
   }
 
-  async googleAuth(data, argMode = 'login') {
-    const payload = typeof data === 'object' && data !== null
-      ? data
-      : { credential: data, mode: argMode };
-    const { credential, email: bodyEmail, name: bodyName, picture: bodyPicture, sub: bodySub } = payload;
-    const mode = payload.mode || argMode || 'login';
+  async googleAuth({ credential, email: bodyEmail, name: bodyName, picture: bodyPicture, sub: bodySub, mode = 'login' }) {
     let email = bodyEmail;
     let name = bodyName;
     let picture = bodyPicture;
@@ -374,7 +340,7 @@ class AuthService {
           }
         }
       } catch (err) {
-        logger.warn(`Google token verification fallback activated: ${err.message}`);
+        console.warn('Google token verification fallback activated:', err.message);
       }
     }
 
@@ -437,9 +403,7 @@ class AuthService {
     };
   }
 
-  async forgotPassword(data) {
-    const payload = typeof data === 'object' && data !== null ? data : { email: data };
-    const { email } = payload;
+  async forgotPassword({ email }) {
     if (!email) {
       const err = new Error('Email address is required.');
       err.statusCode = 400;
@@ -456,7 +420,7 @@ class AuthService {
         purpose: 'password_reset',
       });
 
-      const emailResult = await emailService.sendVerificationOTP({
+      emailService.sendVerificationOTP({
         email: user.email,
         otp: otpData.otpCode,
         purpose: 'password_reset',
@@ -465,7 +429,6 @@ class AuthService {
       return {
         success: true,
         otpSentTimestamp: otpData.createdAt,
-        emailDelivered: emailResult.success,
         message: 'If an account exists for this email, a 6-digit password reset code has been sent.',
       };
     }
@@ -477,9 +440,7 @@ class AuthService {
     };
   }
 
-  async resetPassword(data, argOtp, argPass) {
-    const payload = typeof data === 'object' && data !== null ? data : { email: data, otp: argOtp, newPassword: argPass };
-    const { email, otp, newPassword } = payload;
+  async resetPassword({ email, otp, newPassword }) {
     if (!email || !otp || !newPassword) {
       const err = new Error('Email, 6-digit verification code, and new password are required.');
       err.statusCode = 400;

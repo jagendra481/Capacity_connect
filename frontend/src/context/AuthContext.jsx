@@ -30,13 +30,12 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, []);
 
-  const login = async (credentials, password) => {
-    const payload = typeof credentials === 'object' ? credentials : { email: credentials, password };
-    const res = await authService.login(payload);
+  const login = async (credentials) => {
+    const res = await authService.login(credentials);
     if (res.data?.user) {
       setUser(res.data.user);
     }
-    return res.data?.user || res.data;
+    return res;
   };
 
   const signup = async (userData) => {
@@ -67,22 +66,20 @@ export const AuthProvider = ({ children }) => {
     return res;
   };
 
-  const loginWithGoogle = async (googleData, mode = 'login') => {
-    const payload = typeof googleData === 'string' ? { credential: googleData } : googleData;
-    const res = await authService.googleAuth(payload, mode);
+  const loginWithGoogle = async (googleData) => {
+    const res = await authService.googleAuth(googleData, 'login');
     if (res.data?.user) {
       setUser(res.data.user);
     }
-    return res.data?.user || res.data;
+    return res;
   };
 
-  const signupWithGoogle = async (googleData, mode = 'signup') => {
-    const payload = typeof googleData === 'string' ? { credential: googleData } : googleData;
-    const res = await authService.googleAuth(payload, mode);
+  const signupWithGoogle = async (googleData) => {
+    const res = await authService.googleAuth(googleData, 'signup');
     if (res.data?.user) {
       setUser(res.data.user);
     }
-    return res.data?.user || res.data;
+    return res;
   };
 
   const forgotPassword = async (email) => {

@@ -1,9 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-export const GoogleLoginButton = ({ onGoogleSuccess, onSuccess, onError, mode = 'login', label = 'Continue with Google' }) => {
+export const GoogleLoginButton = ({ onGoogleSuccess, onError, label = 'Continue with Google' }) => {
   const googleBtnRef = useRef(null);
   const [gisLoaded, setGisLoaded] = useState(false);
-  const handleSuccessCallback = onGoogleSuccess || onSuccess;
 
   useEffect(() => {
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '382657497984-5d9hmrdb3974pn0dm8pnr9t8k5pdbbgo.apps.googleusercontent.com';
@@ -49,14 +48,14 @@ export const GoogleLoginButton = ({ onGoogleSuccess, onSuccess, onError, mode = 
 
     const handleCredentialResponse = (response) => {
       if (response?.credential) {
-        if (handleSuccessCallback) handleSuccessCallback({ credential: response.credential, mode });
+        onGoogleSuccess({ credential: response.credential });
       } else if (onError) {
         onError('Google login failed or closed');
       }
     };
 
     loadGoogleSdk();
-  }, [handleSuccessCallback, onError, mode]);
+  }, [onGoogleSuccess, onError]);
 
   // Fallback button only if GIS script is completely blocked or failed to load
   const handleFallbackAuth = () => {
@@ -64,16 +63,12 @@ export const GoogleLoginButton = ({ onGoogleSuccess, onSuccess, onError, mode = 
       window.google.accounts.id.prompt();
     } else {
       const mockEmail = `user_${Math.floor(1000 + Math.random() * 9000)}@gmail.com`;
-      if (handleSuccessCallback) {
-        handleSuccessCallback({
-          email: mockEmail,
-          name: 'Google User',
-          picture: 'https://api.dicebear.com/7.x/avataaars/svg?seed=google_user',
-          sub: `google_id_${Date.now()}`,
-          credential: `fallback_token_${Date.now()}`,
-          mode
-        });
-      }
+      onGoogleSuccess({
+        email: mockEmail,
+        name: 'Google User',
+        picture: 'https://api.dicebear.com/7.x/avataaars/svg?seed=google_user',
+        sub: `google_id_${Date.now()}`,
+      });
     }
   };
 
