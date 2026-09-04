@@ -4,7 +4,7 @@ import courseService from '../../services/courseService';
 import ModuleList from '../../components/courses/ModuleList';
 import CourseProgress from '../../components/courses/CourseProgress';
 import Loader from '../../components/common/Loader';
-import { Clock, BookOpen, User, ArrowLeft, PlayCircle, Award, Bot, Sparkles } from 'lucide-react';
+import { Clock, BookOpen, User, ArrowLeft, PlayCircle, Award, Bot, Sparkles, ExternalLink, Youtube } from 'lucide-react';
 
 export const CourseDetails = () => {
   const { id } = useParams();
@@ -72,6 +72,23 @@ export const CourseDetails = () => {
                 <PlayCircle className="w-5 h-5" />
                 <span>Continue Learning</span>
               </Link>
+            )}
+
+            {course.playlist_url && (
+              <a
+                href={course.playlist_url}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/30 text-xs font-bold rounded-xl transition-all flex items-center justify-center space-x-2"
+              >
+                <Youtube className="w-4 h-4" />
+                <span>Open YouTube Playlist</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            )}
+
+            {course.playlist_title && (
+              <p className="text-[11px] text-slate-500 text-center -mt-1">Curated source: {course.playlist_title}</p>
             )}
 
             {/* Core Feature: Ask from my course button */}

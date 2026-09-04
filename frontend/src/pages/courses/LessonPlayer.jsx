@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import courseService from '../../services/courseService';
 import ResourceViewer from '../../components/courses/ResourceViewer';
 import Loader from '../../components/common/Loader';
-import { ArrowLeft, CheckCircle2, ArrowRight, Play, BookOpen, Bot } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ArrowRight, Play, BookOpen, Bot, ExternalLink, Youtube } from 'lucide-react';
 
 export const LessonPlayer = () => {
   const { id: courseId, lessonId } = useParams();
@@ -62,7 +62,7 @@ export const LessonPlayer = () => {
       <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
         <div className="aspect-video w-full bg-slate-950 flex items-center justify-center relative">
           <iframe
-            src={lesson.video_url || 'https://www.youtube.com/embed/dQw4w9WgXcQ'}
+            src={lesson.video_url || 'about:blank'}
             title={lesson.title}
             className="w-full h-full border-0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -76,13 +76,27 @@ export const LessonPlayer = () => {
               <span className="text-xs font-semibold text-brand-400 uppercase tracking-wider">Lesson Video</span>
               <h1 className="text-xl md:text-2xl font-bold text-slate-100 mt-1">{lesson.title}</h1>
             </div>
-            <Link
-              to="/ai/assistant"
-              className="inline-flex items-center space-x-2 px-3.5 py-2 bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 rounded-xl text-xs font-semibold transition-colors"
-            >
-              <Bot className="w-4 h-4" />
-              <span>Ask AI About This Lesson</span>
-            </Link>
+            <div className="flex flex-wrap gap-2">
+              {lesson.playlist_url && (
+                <a
+                  href={lesson.playlist_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center space-x-2 px-3.5 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/30 rounded-xl text-xs font-semibold transition-colors"
+                >
+                  <Youtube className="w-4 h-4" />
+                  <span>Open Playlist</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              )}
+              <Link
+                to="/ai/assistant"
+                className="inline-flex items-center space-x-2 px-3.5 py-2 bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 rounded-xl text-xs font-semibold transition-colors"
+              >
+                <Bot className="w-4 h-4" />
+                <span>Ask AI About This Lesson</span>
+              </Link>
+            </div>
           </div>
 
           {/* Lesson Text Content */}

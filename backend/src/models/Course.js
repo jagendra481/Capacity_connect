@@ -1,61 +1,91 @@
 const db = require('../config/database');
 
+// The fallback catalog is also used when PostgreSQL is not configured locally.
+// Each course has a curated, course-specific YouTube series rather than a generic video.
 const defaultDemoCourses = [
   {
     id: 101,
-    title: 'Advanced React State & Micro-Frontend Architecture',
-    description: 'Master enterprise React application design, state management with Context & Redux, custom hooks, dynamic loading, and component performance optimization.',
-    category: 'Engineering',
-    level: 'Advanced',
-    duration: '8h 45m',
+    title: 'Modern React Architecture & Performance',
+    description: 'Build production-ready React applications with component design, hooks, routing, state patterns, performance tuning, and deployment practices.',
+    category: 'Engineering', level: 'Advanced', duration: '12h 00m',
     thumbnail_url: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?auto=format&fit=crop&q=80&w=600',
-    trainer_name: 'Dr. Sarah Connor',
-    prerequisites: 'Basic JavaScript & React fundamentals',
-    status: 'published',
-    modulesCount: 4,
-    lessonsCount: 16,
+    trainer_name: 'Net Ninja', prerequisites: 'JavaScript ES6 and HTML/CSS fundamentals', status: 'published',
+    modulesCount: 4, lessonsCount: 8,
+    playlist_title: 'Full Modern React Tutorial',
+    playlist_url: 'https://www.youtube.com/playlist?list=PL4cUxeGkcC9gZD-Tvwfod2gaISzfRiP9d',
+    playlist_id: 'PL4cUxeGkcC9gZD-Tvwfod2gaISzfRiP9d',
   },
   {
     id: 102,
-    title: 'Node.js Enterprise Microservices & API Gateway',
-    description: 'Build scalable REST & GraphQL APIs using Express, PostgreSQL, JWT authentication, Redis caching, microservices messaging, and Docker deployment.',
-    category: 'Engineering',
-    level: 'Intermediate',
-    duration: '10h 30m',
+    title: 'Node.js, Express & API Engineering',
+    description: 'Develop secure backend services with Node.js, Express, REST APIs, routing, middleware, data persistence, and an MVC structure.',
+    category: 'Engineering', level: 'Intermediate', duration: '10h 30m',
     thumbnail_url: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=600',
-    trainer_name: 'Dr. Sarah Connor',
-    prerequisites: 'JavaScript ES6 & Node basics',
-    status: 'published',
-    modulesCount: 5,
-    lessonsCount: 20,
+    trainer_name: 'Net Ninja', prerequisites: 'JavaScript ES6 and basic command-line use', status: 'published',
+    modulesCount: 4, lessonsCount: 8,
+    playlist_title: 'Node.js Crash Course Tutorial',
+    playlist_url: 'https://www.youtube.com/playlist?list=PL4cUxeGkcC9jsz4LDYc6kv3ymONOKxwBU',
+    playlist_id: 'PL4cUxeGkcC9jsz4LDYc6kv3ymONOKxwBU',
   },
   {
     id: 103,
-    title: 'PostgreSQL Advanced Querying & Performance Tuning',
-    description: 'Deep dive into relational schema normalization, indexes (B-Tree, GIN), query planner execution plans, connection pooling, and ACID transaction isolation.',
-    category: 'Database',
-    level: 'Intermediate',
-    duration: '6h 15m',
+    title: 'PostgreSQL Querying & Database Performance',
+    description: 'Design reliable relational databases, write expressive SQL, understand joins and transactions, and apply indexing and query-performance techniques.',
+    category: 'Database', level: 'Intermediate', duration: '8h 00m',
     thumbnail_url: 'https://images.unsplash.com/photo-1544383835-bda2bc66a55d?auto=format&fit=crop&q=80&w=600',
-    trainer_name: 'Marcus Vance',
-    prerequisites: 'Basic SQL syntax',
-    status: 'published',
-    modulesCount: 3,
-    lessonsCount: 12,
+    trainer_name: 'Knowledge 360', prerequisites: 'Basic SQL concepts', status: 'published',
+    modulesCount: 4, lessonsCount: 8,
+    playlist_title: 'PostgreSQL Full Playlist',
+    playlist_url: 'https://www.youtube.com/playlist?list=PLSU32T6nmU25qowhWMM4ZUDUbSvsV78GG',
+    playlist_id: 'PLSU32T6nmU25qowhWMM4ZUDUbSvsV78GG',
   },
   {
     id: 104,
-    title: 'Enterprise AI RAG Architecture & Vector Database',
-    description: 'Implement Retrieval-Augmented Generation (RAG) using OpenAI/Gemini APIs, vector embeddings, chunking strategies, and course material knowledge bases.',
-    category: 'AI',
-    level: 'Advanced',
-    duration: '7h 20m',
+    title: 'Production RAG Systems & Vector Search',
+    description: 'Create grounded AI applications with document indexing, embeddings, vector retrieval, prompt construction, evaluation, and advanced RAG patterns.',
+    category: 'AI', level: 'Advanced', duration: '9h 00m',
     thumbnail_url: 'https://images.unsplash.com/photo-1677442136019-21780efad99a?auto=format&fit=crop&q=80&w=600',
-    trainer_name: 'Dr. Sarah Connor',
-    prerequisites: 'Python or Node.js backend development',
-    status: 'published',
-    modulesCount: 4,
-    lessonsCount: 14,
+    trainer_name: 'LangChain', prerequisites: 'Python or JavaScript and LLM API basics', status: 'published',
+    modulesCount: 4, lessonsCount: 8,
+    playlist_title: 'RAG From Scratch',
+    playlist_url: 'https://www.youtube.com/playlist?list=PLfaIDFEXuae2LXbO1_PKyVJiQ23ZztA0x',
+    playlist_id: 'PLfaIDFEXuae2LXbO1_PKyVJiQ23ZztA0x',
+  },
+  {
+    id: 105,
+    title: 'Python Foundations for Automation & Data',
+    description: 'Gain a practical Python foundation covering core syntax, data structures, functions, modules, virtual environments, and automation workflows.',
+    category: 'Programming', level: 'Beginner', duration: '15h 00m',
+    thumbnail_url: 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?auto=format&fit=crop&q=80&w=600',
+    trainer_name: 'Corey Schafer', prerequisites: 'No programming experience required', status: 'published',
+    modulesCount: 4, lessonsCount: 8,
+    playlist_title: 'Python Tutorials',
+    playlist_url: 'https://www.youtube.com/playlist?list=PL-osiE80TeTt2d9bfVyTiXJA-UTHn6WwU',
+    playlist_id: 'PL-osiE80TeTt2d9bfVyTiXJA-UTHn6WwU',
+  },
+  {
+    id: 106,
+    title: 'Cybersecurity Foundations & Ethical Hacking',
+    description: 'Learn security fundamentals through networking, threat modelling, Linux and security tools, vulnerability analysis, and practical defensive habits.',
+    category: 'Security', level: 'Beginner', duration: '11h 00m',
+    thumbnail_url: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&q=80&w=600',
+    trainer_name: 'freeCodeCamp.org', prerequisites: 'Basic computer and networking concepts', status: 'published',
+    modulesCount: 4, lessonsCount: 8,
+    playlist_title: 'Ethical Hacking Course Series',
+    playlist_url: 'https://www.youtube.com/playlist?list=PLWKjhJtqVAbnklGh3FNRLECx_2D_vK3mu',
+    playlist_id: 'PLWKjhJtqVAbnklGh3FNRLECx_2D_vK3mu',
+  },
+  {
+    id: 107,
+    title: 'Azure Cloud Architecture & DevOps',
+    description: 'Build cloud fluency with Azure fundamentals, infrastructure design, deployment concepts, monitoring, security, and scalable delivery practices.',
+    category: 'Cloud', level: 'Intermediate', duration: '10h 00m',
+    thumbnail_url: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=600',
+    trainer_name: 'Simplilearn', prerequisites: 'Linux basics and application-development familiarity', status: 'published',
+    modulesCount: 4, lessonsCount: 8,
+    playlist_title: 'Azure Training',
+    playlist_url: 'https://www.youtube.com/playlist?list=PLEiEAq2VkUULWRHXW2RMpqFVnHOJHtzYT',
+    playlist_id: 'PLEiEAq2VkUULWRHXW2RMpqFVnHOJHtzYT',
   },
 ];
 
@@ -64,34 +94,18 @@ class Course {
     if (db.getIsPgConnected()) {
       let queryStr = 'SELECT * FROM courses WHERE 1=1';
       const params = [];
-      if (search) {
-        params.push(`%${search}%`);
-        queryStr += ` AND (title ILIKE $${params.length} OR description ILIKE $${params.length})`;
-      }
-      if (category) {
-        params.push(category);
-        queryStr += ` AND category = $${params.length}`;
-      }
-      if (level) {
-        params.push(level);
-        queryStr += ` AND level = $${params.length}`;
-      }
+      if (search) { params.push(`%${search}%`); queryStr += ` AND (title ILIKE $${params.length} OR description ILIKE $${params.length})`; }
+      if (category) { params.push(category); queryStr += ` AND category = $${params.length}`; }
+      if (level) { params.push(level); queryStr += ` AND level = $${params.length}`; }
       queryStr += ' ORDER BY id DESC';
       const res = await db.query(queryStr, params);
       return res.rows;
     }
 
     let filtered = defaultDemoCourses;
-    if (search) {
-      const q = search.toLowerCase();
-      filtered = filtered.filter(c => c.title.toLowerCase().includes(q) || c.description.toLowerCase().includes(q));
-    }
-    if (category) {
-      filtered = filtered.filter(c => c.category.toLowerCase() === category.toLowerCase());
-    }
-    if (level) {
-      filtered = filtered.filter(c => c.level.toLowerCase() === level.toLowerCase());
-    }
+    if (search) { const q = search.toLowerCase(); filtered = filtered.filter(c => c.title.toLowerCase().includes(q) || c.description.toLowerCase().includes(q)); }
+    if (category) filtered = filtered.filter(c => c.category.toLowerCase() === category.toLowerCase());
+    if (level) filtered = filtered.filter(c => c.level.toLowerCase() === level.toLowerCase());
     return filtered;
   }
 
@@ -113,21 +127,11 @@ class Course {
       );
       return res.rows[0];
     }
-
-    const newId = defaultDemoCourses.length + 101;
     const newCourse = {
-      id: newId,
-      title,
-      description,
-      category: category || 'Engineering',
-      level: level || 'Intermediate',
-      duration: duration || '4h 00m',
+      id: Math.max(...defaultDemoCourses.map(course => course.id)) + 1, title, description,
+      category: category || 'Engineering', level: level || 'Intermediate', duration: duration || '4h 00m',
       thumbnail_url: thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=600',
-      trainer_name: 'Technical Trainer',
-      prerequisites: prerequisites || 'None',
-      status: 'published',
-      modulesCount: 2,
-      lessonsCount: 6,
+      trainer_name: 'Technical Trainer', prerequisites: prerequisites || 'None', status: 'published', modulesCount: 2, lessonsCount: 6,
     };
     defaultDemoCourses.unshift(newCourse);
     return newCourse;
