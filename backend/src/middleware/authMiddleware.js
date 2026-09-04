@@ -20,15 +20,24 @@ const authenticate = async (req, res, next) => {
 };
 
 const requireRole = (...allowedRoles) => {
+  const roles = allowedRoles.flat();
   return (req, res, next) => {
     if (!req.user || !req.user.role) {
       return response.error(res, 'Forbidden: User identity missing.', 403);
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
+    const userRole = req.user.role.toLowerCase();
+    const isAllowed = roles.some(r => {
+      const targetRole = r.toLowerCase();
+      if (targetRole === userRole) return true;
+      if ((targetRole === 'admin' || targetRole === 'administrator') && (userRole === 'admin' || userRole === 'administrator')) return true;
+      return false;
+    });
+
+    if (!isAllowed) {
       return response.error(
         res,
-        `Forbidden: Access restricted to ${allowedRoles.join(', ')} roles. Your role is '${req.user.role}'.`,
+        `Forbidden: Access restricted to ${roles.join(', ')} roles. Your role is '${req.user.role}'.`,
         403
       );
     }

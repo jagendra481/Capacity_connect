@@ -1,9 +1,14 @@
-import React from 'react';
-import { useLocation, Link } from 'react-router-dom';
-import { Award, CheckCircle2, XCircle, ArrowRight, RotateCcw, Target, Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
+import certificateService from '../../services/certificateService';
+import { Award, CheckCircle2, XCircle, ArrowRight, RotateCcw, Target, Sparkles, ShieldCheck } from 'lucide-react';
 
 export const QuizResult = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [claiming, setClaiming] = useState(false);
+  const [claimed, setClaimed] = useState(false);
+
   const result = location.state?.resultData || {
     score: 85,
     passingScore: 70,
@@ -21,6 +26,25 @@ export const QuizResult = () => {
         explanation: 'useEffect handles side effects in functional components.',
       },
     ],
+  };
+
+  const handleClaimCertificate = async () => {
+    setClaiming(true);
+    try {
+      await certificateService.generateCertificate({
+        title: result.assessmentTitle || 'Course Completion & Skill Evaluation',
+        status: 'pending', // Trainee requests certificate, Admin approves it
+      });
+      setClaimed(true);
+      setTimeout(() => {
+        navigate('/certificates');
+      }, 1500);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to request certificate. Please try again.');
+    } finally {
+      setClaiming(false);
+    }
   };
 
   return (
@@ -76,6 +100,28 @@ export const QuizResult = () => {
             </p>
           </div>
         </div>
+
+        {/* Claim Certificate Button */}
+        {result.passed && (
+          <div className="pt-2">
+            {claimed ? (
+              <div className="p-3 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 rounded-xl text-xs font-bold inline-flex items-center space-x-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span>Certificate Request Submitted to Admin! Redirecting to Certificates Gallery...</span>
+              </div>
+            ) : (
+              <button
+                onClick={handleClaimCertificate}
+                disabled={claiming}
+                className="px-6 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-lg shadow-amber-500/20 inline-flex items-center space-x-2"
+              >
+                <Award className="w-4 h-4" />
+                <span>{claiming ? 'Submitting Certificate Request...' : 'Claim Digital Completion Certificate'}</span>
+                <Sparkles className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        )}
 
         <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 inline-flex items-center space-x-2 text-xs text-brand-300">
           <Sparkles className="w-4 h-4 text-brand-400" />
