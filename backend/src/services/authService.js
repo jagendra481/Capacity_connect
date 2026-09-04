@@ -5,8 +5,13 @@ const emailService = require('./emailService');
 const { hashPassword, comparePassword } = require('../utils/password');
 const { generateToken } = require('../utils/jwt');
 const env = require('../config/env');
+const logger = require('../utils/logger');
 
 class AuthService {
+  async signup(data) {
+    return this.register(data);
+  }
+
   async register({ email, password, full_name, role = 'trainee', department_id = 1, designation = null, employee_student_id = null }) {
     if (!email || !password || !full_name) {
       const err = new Error('Full name, email, and password are required.');
@@ -70,23 +75,30 @@ class AuthService {
       purpose: 'email_verification',
     });
 
-    // Send email asynchronously
-    emailService.sendVerificationOTP({
+    logger.info(`[AUTH] User created (${user.email}). Sending signup verification email...`);
+    const emailResult = await emailService.sendVerificationOTP({
       email: user.email,
       otp: otpData.otpCode,
       purpose: 'email_verification',
     });
+
+    if (!emailResult.success) {
+      logger.error(`[EMAIL ERROR] Signup verification email failed for ${user.email}: ${emailResult.error}`);
+    }
 
     return {
       success: true,
       requiresEmailVerification: true,
       email: user.email,
       otpSentTimestamp: otpData.createdAt,
+      emailDelivered: emailResult.success,
       message: 'Verification code sent successfully. We have sent a 6-digit verification code to your email address.',
     };
   }
 
-  async verifyEmailOTP({ email, otp }) {
+  async verifyEmailOTP(data, argOtp) {
+    const payload = typeof data === 'object' && data !== null ? data : { email: data, otp: argOtp };
+    const { email, otp } = payload;
     if (!email || !otp) {
       const err = new Error('Email address and 6-digit verification code are required.');
       err.statusCode = 400;
@@ -162,16 +174,24 @@ class AuthService {
       purpose,
     });
 
-    // Send email asynchronously
-    emailService.sendVerificationOTP({
+    logger.info(`[AUTH] Resending verification email to ${user.email}...`);
+    const emailResult = await emailService.sendVerificationOTP({
       email: user.email,
       otp: otpData.otpCode,
       purpose,
     });
 
+    if (!emailResult.success) {
+      logger.error(`[EMAIL ERROR] Resend OTP email delivery failed for ${user.email}: ${emailResult.error}`);
+      const err = new Error("We couldn't send the verification code. Please try again.");
+      err.statusCode = 500;
+      throw err;
+    }
+
     return {
       success: true,
       otpSentTimestamp: otpData.createdAt,
+      emailDelivered: emailResult.success,
       message: 'New verification code sent.',
     };
   }
@@ -203,27 +223,58 @@ class AuthService {
 
     // Check Email Verification status
     if (user.email_verified === false) {
-      // Send OTP if cooldown permits
+      logger.info(`[AUTH] Login request for unverified account: ${user.email}`);
+
+      let otpCode = null;
+      let otpSentTimestamp = Date.now();
+
       try {
         const otpData = await OTPModel.createOTP({
           userId: user.id,
           email: user.email,
           purpose: 'email_verification',
         });
-
-        emailService.sendVerificationOTP({
-          email: user.email,
-          otp: otpData.otpCode,
-          purpose: 'email_verification',
-        });
+        otpCode = otpData.otpCode;
+        otpSentTimestamp = otpData.createdAt;
+        logger.info(`[OTP] Created new verification OTP for unverified user ${user.email}`);
       } catch (e) {
-        // Ignore cooldown exception when re-navigating to login
+        if (e.statusCode === 429) {
+          logger.info(`[OTP] Cooldown active for ${user.email}. Re-sending existing active OTP.`);
+          const activeOTP = await OTPModel.findActiveOTP({
+            email: user.email,
+            purpose: 'email_verification',
+          });
+          if (activeOTP) {
+            otpCode = activeOTP.otpCode;
+            otpSentTimestamp = activeOTP.createdAt;
+          }
+        }
+        if (!otpCode) throw e;
       }
 
-      const err = new Error('Please verify your email before continuing.');
+      if (otpCode) {
+        logger.info(`[EMAIL] Dispatching verification email for unverified login to ${user.email}...`);
+        const emailResult = await emailService.sendVerificationOTP({
+          email: user.email,
+          otp: otpCode,
+          purpose: 'email_verification',
+        });
+
+        if (!emailResult.success) {
+          logger.error(`[EMAIL ERROR] Verification email delivery failed for ${user.email}: ${emailResult.error}`);
+          const err = new Error("We couldn't send the verification code. Please try again.");
+          err.statusCode = 500;
+          throw err;
+        }
+
+        logger.info(`[EMAIL] Verification email accepted by provider for ${user.email}`);
+      }
+
+      const err = new Error("Your email isn't verified yet. We've sent a verification code to your email.");
       err.statusCode = 403;
       err.requiresEmailVerification = true;
       err.email = user.email;
+      err.otpSentTimestamp = otpSentTimestamp;
       throw err;
     }
 

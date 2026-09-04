@@ -1,0 +1,14 @@
+{
+  "name": "capacity-connect-root",
+  "version": "1.0.0",
+  "description": "Capacity Connect Digital Capacity Building & Learning Management Portal",
+  "main": "backend/src/server.js",
+  "scripts": {
+    "start": "node backend/src/server.js",
+    "build": "npm --prefix frontend install && npm --prefix frontend run build && npm --prefix backend install",
+    "postinstall": "npm run build"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
