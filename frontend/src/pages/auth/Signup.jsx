@@ -1,34 +1,45 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import AuthLayout from '../../components/auth/AuthLayout';
 import GoogleLoginButton from '../../components/auth/GoogleLoginButton';
 import { getDashboardRoute } from '../../utils/roleUtils';
-import { User, Mail, Lock, Award, ArrowRight, AlertCircle, LogIn } from 'lucide-react';
+import { User, Mail, Lock, ArrowRight, AlertCircle, LogIn } from 'lucide-react';
 
 export const Signup = () => {
   const { signup, signupWithGoogle } = useAuth();
   const navigate = useNavigate();
 
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
 
   const [error, setError] = useState('');
   const [accountExists, setAccountExists] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (error) {
+      setError('');
+      setAccountExists(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setAccountExists(false);
 
-    if (password !== confirmPassword) {
+    if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match.');
       return;
     }
 
-    if (password.length < 6) {
+    if (formData.password.length < 6) {
       setError('Password must be at least 6 characters long.');
       return;
     }
@@ -37,27 +48,31 @@ export const Signup = () => {
 
     try {
       const res = await signup({
-        full_name: fullName,
-        email,
-        password,
-        role: 'trainee', // Public signup is always trainee
+        full_name: formData.fullName.trim(),
+        email: formData.email.trim(),
+        password: formData.password,
+        role: 'trainee', // Public signup is strictly trainee
       });
 
       if (res.data?.requiresEmailVerification) {
-        localStorage.setItem('pending_verify_email', email);
+        localStorage.setItem('pending_verify_email', formData.email.trim());
         const sentAt = res.data?.otpSentTimestamp || Date.now();
-        localStorage.setItem(`otp_sent_at_${email}`, String(sentAt));
-        navigate('/verify-email', { state: { email, message: res.data?.message || 'Verification code sent.' } });
+        localStorage.setItem(`otp_sent_at_${formData.email.trim()}`, String(sentAt));
+        navigate('/verify-email', { state: { email: formData.email.trim(), message: res.data?.message || 'Verification code sent.' } });
       } else {
         const userRole = res.data?.user?.role || 'trainee';
         navigate(getDashboardRoute(userRole), { replace: true });
       }
     } catch (err) {
-      if (err?.accountExists) {
+      console.error('Signup error:', err);
+      const isExists = err?.accountExists || err?.response?.data?.accountExists || err?.response?.status === 409;
+      const msg = err?.response?.data?.message || err?.message || 'Failed to create account. Please check your information.';
+
+      if (isExists) {
         setAccountExists(true);
         setError('An account with this email already exists. Please log in.');
       } else {
-        setError(err?.message || err || 'Failed to create account. Please check your information.');
+        setError(msg);
       }
     } finally {
       setLoading(false);
@@ -69,42 +84,41 @@ export const Signup = () => {
     setAccountExists(false);
     setLoading(true);
     try {
-      const res = await signupWithGoogle(googlePayload);
-      const userRole = res.data?.user?.role || 'trainee';
+      const credentialToken = googlePayload.credential || googlePayload;
+      const res = await signupWithGoogle(credentialToken, 'signup');
+      const userRole = res?.user?.role || res?.data?.user?.role || 'trainee';
       navigate(getDashboardRoute(userRole), { replace: true });
     } catch (err) {
-      setError(err?.message || err || 'Google signup failed');
+      console.error('Google signup error:', err);
+      const msg = err?.response?.data?.message || err?.message || 'Google signup failed.';
+      setError(msg);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-950 p-4 relative overflow-hidden">
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-brand-600/20 blur-[120px] rounded-full pointer-events-none" />
-
-      <div className="w-full max-w-md bg-slate-900/90 border border-slate-800 rounded-2xl p-8 shadow-2xl backdrop-blur-xl z-10">
-        <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-600 to-cyan-400 flex items-center justify-center mx-auto mb-3 shadow-lg shadow-brand-500/20">
-            <Award className="w-7 h-7 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-slate-100">Create your account</h1>
-          <p className="text-sm text-slate-400 mt-1">Join the Capacity Connect Platform</p>
+    <AuthLayout>
+      <div className="space-y-5">
+        <div>
+          <h2 className="text-2xl font-extrabold text-white tracking-tight">Create your account</h2>
+          <p className="text-xs text-slate-400 mt-1">Join the Capacity Connect Platform to start learning.</p>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm space-y-3">
-            <div className="flex items-start space-x-3">
-              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+          <div className="p-4 bg-rose-950/40 border border-rose-500/40 rounded-2xl text-xs text-rose-300 space-y-2">
+            <div className="flex items-center space-x-2 font-semibold">
+              <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />
               <span>{error}</span>
             </div>
+
             {accountExists && (
-              <div className="pt-2 border-t border-red-500/20 text-center">
+              <div className="pt-2 border-t border-rose-500/20">
                 <Link
-                  to="/login"
-                  className="inline-flex items-center space-x-2 px-4 py-2 bg-slate-800 text-cyan-400 border border-cyan-500/30 text-xs font-bold rounded-lg transition-transform hover:scale-[1.02]"
+                  to={`/login?email=${encodeURIComponent(formData.email)}`}
+                  className="w-full py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs transition-all shadow-md flex items-center justify-center space-x-1.5"
                 >
-                  <LogIn className="w-4 h-4" />
+                  <LogIn className="w-3.5 h-3.5" />
                   <span>Log In Now</span>
                 </Link>
               </div>
@@ -112,106 +126,108 @@ export const Signup = () => {
           </div>
         )}
 
-        {/* Google Authentication */}
-        <div className="mb-6">
-          <GoogleLoginButton onGoogleSuccess={handleGoogleSuccess} label="Continue with Google" />
-          <div className="relative my-6 text-center">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-800" />
-            </div>
-            <span className="relative px-3 bg-slate-900 text-[11px] font-semibold uppercase text-slate-500 tracking-wider">
-              Or register with email
-            </span>
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-              Full Name
-            </label>
+        <form onSubmit={handleSubmit} className="space-y-3.5">
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-slate-300">Full Name</label>
             <div className="relative">
-              <User className="w-5 h-5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <User className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
               <input
                 type="text"
+                name="fullName"
                 required
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Jane Doe"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-slate-100 text-sm focus:outline-none focus:border-cyan-500 transition-colors"
+                value={formData.fullName}
+                onChange={handleChange}
+                placeholder="Alex Morgan"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
               />
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-              Email Address
-            </label>
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-slate-300">Email Address</label>
             <div className="relative">
-              <Mail className="w-5 h-5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
               <input
                 type="email"
+                name="email"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@company.com"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-slate-100 text-sm focus:outline-none focus:border-cyan-500 transition-colors"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="name@organization.org"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
               />
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-              Password
-            </label>
-            <div className="relative">
-              <Lock className="w-5 h-5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="At least 6 characters"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-slate-100 text-sm focus:outline-none focus:border-cyan-500 transition-colors"
-              />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-300">Password</label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
+                <input
+                  type="password"
+                  name="password"
+                  required
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="••••••••"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-3 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
+                />
+              </div>
             </div>
-          </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-              Confirm Password
-            </label>
-            <div className="relative">
-              <Lock className="w-5 h-5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Re-enter password"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-slate-100 text-sm focus:outline-none focus:border-cyan-500 transition-colors"
-              />
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-slate-300">Confirm Password</label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  required
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  placeholder="••••••••"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-3 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
+                />
+              </div>
             </div>
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 disabled:opacity-50 text-slate-950 font-bold rounded-xl transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center space-x-2 mt-4"
+            className="w-full py-3.5 bg-gradient-to-r from-cyan-500 via-indigo-600 to-purple-600 hover:opacity-95 text-white font-bold rounded-xl text-xs transition-all shadow-lg shadow-cyan-500/20 disabled:opacity-50 flex items-center justify-center space-x-1.5 mt-2"
           >
-            <span>{loading ? 'Sending verification code...' : 'Create Account'}</span>
-            {!loading && <ArrowRight className="w-4 h-4" />}
+            <span>{loading ? 'Creating Account...' : 'Create Account'}</span>
+            <ArrowRight className="w-4 h-4" />
           </button>
         </form>
 
-        <p className="mt-6 text-center text-xs text-slate-400">
-          Already have an account?{' '}
-          <Link to="/login" className="text-cyan-400 hover:underline font-semibold">
-            Sign In
-          </Link>
-        </p>
+        <div className="relative my-3">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-slate-800" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-slate-900 px-3 text-slate-500 font-bold">OR</span>
+          </div>
+        </div>
+
+        <GoogleLoginButton
+          mode="signup"
+          onSuccess={handleGoogleSuccess}
+          onError={(err) => setError(err?.message || 'Google sign up failed.')}
+        />
+
+        <div className="text-center pt-1">
+          <p className="text-xs text-slate-400">
+            Already have an account?{' '}
+            <Link to="/login" className="font-bold text-cyan-400 hover:text-cyan-300 transition-colors">
+              Sign in
+            </Link>
+          </p>
+        </div>
       </div>
-    </div>
+    </AuthLayout>
   );
 };
 

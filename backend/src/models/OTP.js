@@ -1,9 +1,17 @@
 const crypto = require('crypto');
 const db = require('../config/database');
+const env = require('../config/env');
 
 class OTPModel {
   static hashOTP(code) {
     return crypto.createHash('sha256').update(String(code).trim()).digest('hex');
+  }
+
+  /**
+   * Generates a cryptographically secure 6-digit OTP
+   */
+  static generateSecureOTP() {
+    return crypto.randomInt(100000, 1000000).toString();
   }
 
   static async checkCooldown({ email, purpose = 'email_verification' }) {
@@ -25,7 +33,7 @@ class OTPModel {
         return {
           canResend: false,
           retryAfter,
-          message: 'Please wait before requesting another code.',
+          message: `Please wait ${retryAfter} seconds before requesting another code.`,
         };
       }
       return { canResend: true, retryAfter: 0 };
@@ -44,7 +52,7 @@ class OTPModel {
       return {
         canResend: false,
         retryAfter,
-        message: 'Please wait before requesting another code.',
+        message: `Please wait ${retryAfter} seconds before requesting another code.`,
       };
     }
     return { canResend: true, retryAfter: 0 };
@@ -62,10 +70,12 @@ class OTPModel {
       throw err;
     }
 
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    // Cryptographically secure 6-digit OTP
+    const otpCode = this.generateSecureOTP();
     const otpHash = this.hashOTP(otpCode);
     const createdAt = new Date();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    const expiryMins = env.otpExpiryMinutes || 10;
+    const expiresAt = new Date(Date.now() + expiryMins * 60 * 1000); // 10 minutes
 
     if (db.getIsPgConnected()) {
       // Invalidate previous active OTPs for this email and purpose
@@ -85,7 +95,7 @@ class OTPModel {
         db.memoryStore.otps = [];
       }
 
-      // Remove existing active OTPs for this email & purpose
+      // Invalidate existing active OTPs for this email & purpose
       db.memoryStore.otps = db.memoryStore.otps.filter(
         o => !(o.email === cleanEmail && o.purpose === purpose)
       );
@@ -136,12 +146,12 @@ class OTPModel {
 
       if (record.attempts >= 5) {
         await db.query('DELETE FROM email_verification_otps WHERE id = $1', [record.id]);
-        return { isValid: false, message: 'Too many attempts. Please request a new verification code.' };
+        return { isValid: false, message: 'Too many failed attempts. Please request a new verification code.' };
       }
 
       if (record.otp_hash !== inputHash) {
         await db.query('UPDATE email_verification_otps SET attempts = attempts + 1 WHERE id = $1', [record.id]);
-        return { isValid: false, message: 'Invalid verification code. Please try again.' };
+        return { isValid: false, message: 'Invalid verification code. Please check and try again.' };
       }
 
       // Mark as verified and delete to ensure single-use
@@ -169,15 +179,15 @@ class OTPModel {
 
     if (record.attempts >= 5) {
       db.memoryStore.otps.splice(index, 1);
-      return { isValid: false, message: 'Too many attempts. Please request a new verification code.' };
+      return { isValid: false, message: 'Too many failed attempts. Please request a new verification code.' };
     }
 
     if (record.otp_code !== cleanOTP && record.otp_hash !== inputHash) {
       record.attempts += 1;
-      return { isValid: false, message: 'Invalid verification code. Please try again.' };
+      return { isValid: false, message: 'Invalid verification code. Please check and try again.' };
     }
 
-    // Mark as verified & consume
+    // Mark as verified & consume to ensure single-use
     db.memoryStore.otps.splice(index, 1);
     return { isValid: true, userId: record.user_id };
   }

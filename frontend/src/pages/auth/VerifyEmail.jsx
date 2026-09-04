@@ -1,21 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import AuthLayout from '../../components/auth/AuthLayout';
 import { getDashboardRoute } from '../../utils/roleUtils';
-import { Award, ArrowRight, AlertCircle, CheckCircle2, RefreshCw } from 'lucide-react';
+import { ArrowRight, AlertCircle, CheckCircle2, RefreshCw, Mail, Edit3 } from 'lucide-react';
 
 export const VerifyEmail = () => {
   const { verifyEmailOTP, resendOTP, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const targetEmail = location.state?.email || user?.email || localStorage.getItem('pending_verify_email') || '';
+  const queryParams = new URLSearchParams(location.search);
+  const emailFromQuery = queryParams.get('email');
+  const targetEmail = location.state?.email || emailFromQuery || user?.email || localStorage.getItem('pending_verify_email') || '';
 
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const inputRefs = useRef([]);
-  
+
   const [error, setError] = useState('');
-  const [successMsg, setSuccessMsg] = useState(location.state?.message || 'Verification code sent.');
+  const [successMsg, setSuccessMsg] = useState(location.state?.message || 'Verification code sent to your email.');
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
 
@@ -27,7 +30,6 @@ export const VerifyEmail = () => {
       const elapsedSeconds = Math.floor((Date.now() - Number(storedTimestamp)) / 1000);
       return Math.max(0, 30 - elapsedSeconds);
     }
-    // Set initial 30s timestamp if none exists
     localStorage.setItem(`otp_sent_at_${targetEmail}`, String(Date.now()));
     return 30;
   };
@@ -42,7 +44,7 @@ export const VerifyEmail = () => {
 
   useEffect(() => {
     let timer;
-    if (cooldown > 0) {
+    if (cooldown > 0 && targetEmail) {
       timer = setInterval(() => {
         const storedTimestamp = localStorage.getItem(`otp_sent_at_${targetEmail}`);
         if (storedTimestamp) {
@@ -98,7 +100,7 @@ export const VerifyEmail = () => {
     const fullOtp = otp.join('');
 
     if (fullOtp.length < 6) {
-      setError('Please enter the complete 6-digit verification code.');
+      setError('Please enter all 6 digits of the verification code.');
       return;
     }
 
@@ -109,10 +111,11 @@ export const VerifyEmail = () => {
       const res = await verifyEmailOTP(targetEmail, fullOtp);
       localStorage.removeItem('pending_verify_email');
       localStorage.removeItem(`otp_sent_at_${targetEmail}`);
-      const userRole = res.data?.user?.role || 'trainee';
+      const userRole = res.data?.user?.role || res?.user?.role || 'trainee';
       navigate(getDashboardRoute(userRole), { replace: true });
     } catch (err) {
-      const msg = typeof err === 'string' ? err : err?.message || 'Invalid verification code. Please try again.';
+      console.error('Verify OTP error:', err);
+      const msg = err.response?.data?.message || err.message || 'Invalid or expired verification code.';
       setError(msg);
     } finally {
       setLoading(false);
@@ -131,53 +134,50 @@ export const VerifyEmail = () => {
       const now = Date.now();
       localStorage.setItem(`otp_sent_at_${targetEmail}`, String(now));
       setCooldown(30);
-      setSuccessMsg(res.data?.message || 'New verification code sent.');
+      setSuccessMsg(res.data?.message || 'A new verification code has been sent to your email.');
       setOtp(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
     } catch (err) {
-      const retryAfter = err?.retryAfter || 30;
-      if (err?.statusCode === 429) {
+      console.error('Resend OTP error:', err);
+      const retryAfter = err.response?.data?.retryAfter || 30;
+      if (err.response?.status === 429) {
         setCooldown(retryAfter);
       }
-      setError(err?.message || err || 'Failed to resend verification code. Please try again.');
+      setError(err.response?.data?.message || err.message || 'Failed to resend code. Please try again.');
     } finally {
       setResending(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-950 p-4 relative overflow-hidden">
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-brand-600/20 blur-[120px] rounded-full pointer-events-none" />
-
-      <div className="w-full max-w-md bg-slate-900/90 border border-slate-800 rounded-2xl p-8 shadow-2xl backdrop-blur-xl z-10 text-center space-y-6">
-        
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-600 to-cyan-400 flex items-center justify-center mx-auto shadow-lg shadow-brand-500/20">
-          <Award className="w-7 h-7 text-white" />
-        </div>
-
+    <AuthLayout>
+      <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">Verify your email</h1>
-          <p className="text-sm text-slate-400 mt-1.5 leading-relaxed">
-            We've sent a 6-digit verification code to:
-          </p>
-          <p className="text-sm font-semibold text-cyan-400 mt-1 font-mono">{targetEmail}</p>
+          <h2 className="text-2xl font-extrabold text-white tracking-tight">Verify Email Address</h2>
+          <p className="text-xs text-slate-400 mt-1">We sent a 6-digit security code to:</p>
+          <div className="flex items-center space-x-2 mt-2 p-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-cyan-400 font-mono text-xs font-semibold">
+            <Mail className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+            <span className="truncate flex-1">{targetEmail}</span>
+            <Link to="/signup" className="text-slate-400 hover:text-slate-200 p-1">
+              <Edit3 className="w-3.5 h-3.5" />
+            </Link>
+          </div>
         </div>
 
         {error && (
-          <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 flex items-start space-x-2.5 text-red-400 text-xs text-left">
-            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+          <div className="p-3.5 bg-rose-950/40 border border-rose-500/40 rounded-2xl text-xs text-rose-300 flex items-start space-x-2">
+            <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
         )}
 
         {successMsg && !error && (
-          <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-start space-x-2.5 text-emerald-400 text-xs text-left">
-            <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" />
+          <div className="p-3.5 bg-emerald-950/40 border border-emerald-500/40 rounded-2xl text-xs text-emerald-300 flex items-start space-x-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
             <span>{successMsg}</span>
           </div>
         )}
 
-        {/* 6 OTP Input Boxes */}
         <form onSubmit={handleVerify} className="space-y-6">
           <div className="flex justify-between gap-2 my-4" onPaste={handlePaste}>
             {otp.map((digit, idx) => (
@@ -189,7 +189,7 @@ export const VerifyEmail = () => {
                 value={digit}
                 onChange={(e) => handleInputChange(idx, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(idx, e)}
-                className="w-12 h-14 bg-slate-950 border border-slate-800 rounded-xl text-center text-xl font-bold text-slate-100 font-mono focus:outline-none focus:border-cyan-400 transition-colors shadow-inner"
+                className="w-12 h-14 bg-slate-950 border border-slate-800 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/30 rounded-xl text-center text-xl font-bold text-slate-100 font-mono focus:outline-none transition-all shadow-inner"
               />
             ))}
           </div>
@@ -197,43 +197,41 @@ export const VerifyEmail = () => {
           <button
             type="submit"
             disabled={loading || otp.join('').length < 6}
-            className="w-full py-3 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 disabled:opacity-50 text-slate-950 font-bold rounded-xl transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center space-x-2"
+            className="w-full py-3.5 bg-gradient-to-r from-cyan-500 via-indigo-600 to-purple-600 hover:opacity-95 disabled:opacity-40 text-white font-bold rounded-xl text-xs transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center space-x-1.5"
           >
             <span>{loading ? 'Verifying...' : 'Verify Email'}</span>
-            {!loading && <ArrowRight className="w-4 h-4" />}
+            <ArrowRight className="w-4 h-4" />
           </button>
         </form>
 
-        {/* 30-Second Cooldown Section */}
-        <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
-          <span>Didn't receive the code?</span>
+        <div className="pt-4 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+          <span>Didn't get the code?</span>
           <button
             type="button"
             onClick={handleResend}
             disabled={cooldown > 0 || resending}
-            className="text-cyan-400 hover:underline font-semibold disabled:opacity-40 disabled:no-underline flex items-center space-x-1"
+            className="text-cyan-400 hover:text-cyan-300 font-semibold disabled:opacity-40 disabled:no-underline flex items-center space-x-1 transition-colors"
           >
             {resending ? (
               <>
-                <RefreshCw className="w-3 h-3 animate-spin" />
-                <span>Sending verification code...</span>
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                <span>Sending...</span>
               </>
             ) : cooldown > 0 ? (
-              <span>Resend OTP in {cooldown}s</span>
+              <span>Resend in {cooldown}s</span>
             ) : (
-              <span>Resend OTP</span>
+              <span>Resend Code</span>
             )}
           </button>
         </div>
 
-        <div className="pt-2 text-xs">
-          <Link to="/login" className="text-slate-400 hover:text-slate-200 underline">
+        <div className="text-center pt-1">
+          <Link to="/login" className="text-xs text-slate-400 hover:text-slate-200 transition-colors">
             Back to Login
           </Link>
         </div>
-
       </div>
-    </div>
+    </AuthLayout>
   );
 };
 
