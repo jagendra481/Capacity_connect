@@ -73,7 +73,15 @@ class CourseService {
     }
 
     await CourseProgress.setLessonCompletion(userId, courseId, lessonId, completed);
-    return this.getCourseProgressSummary(userId, courseId, modules);
+    const summary = await this.getCourseProgressSummary(userId, courseId, modules);
+
+    // If 100% completed, automatically generate pending certificate for Admin review
+    if (summary.progressPercentage === 100) {
+      const certificateService = require('./certificateService');
+      await certificateService.generatePendingCertificateIfEligible(userId, courseId);
+    }
+
+    return summary;
   }
 
   async getCourseProgressSummary(userId, courseId, modules) {

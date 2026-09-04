@@ -46,6 +46,7 @@ const memoryStore = {
   trainingSessions: [],
   registrations: [],
   certificates: [],
+  certificateAuditLogs: [],
   notifications: [],
   aiConversations: [],
   aiMessages: []
@@ -121,7 +122,6 @@ const initializeMemoryStore = async () => {
       competency_score: 0
     }
   ];
-
   memoryStore.courses = [
     {
       id: 1,
@@ -158,7 +158,7 @@ const initializeMemoryStore = async () => {
       module_title: 'Module 1: Clean Architecture & API Design',
       lesson_order: 1,
       title: 'Clean Architecture Principles & Domain Decoupling',
-      content: 'Clean Architecture decouples core business domain logic from UI components, database drivers, and third-party frameworks using entity layers and dependency inversion.',
+      content: 'Clean Architecture decouples core business domain logic from UIcomponents, database drivers, and third-party frameworks using entity layers and dependency inversion.',
       summary: 'Clean architecture isolates enterprise business rules from framework changes.',
     },
     {
@@ -180,8 +180,109 @@ const initializeMemoryStore = async () => {
       summary: 'Event-driven systems use message brokers for high-throughput microservices.',
     }
   ];
-};
 
+  memoryStore.courseProgress = [
+    { id: 1, user_id: 1, course_id: 101, lesson_id: 10101, completed: true, progress_percentage: 100, last_accessed: new Date(Date.now() - 7 * 86400000).toISOString() },
+    { id: 2, user_id: 1, course_id: 101, lesson_id: 10102, completed: true, progress_percentage: 100, last_accessed: new Date(Date.now() - 7 * 86400000).toISOString() },
+    { id: 3, user_id: 1, course_id: 101, lesson_id: 10111, completed: true, progress_percentage: 100, last_accessed: new Date(Date.now() - 7 * 86400000).toISOString() },
+    { id: 4, user_id: 1, course_id: 101, lesson_id: 10112, completed: true, progress_percentage: 100, last_accessed: new Date(Date.now() - 7 * 86400000).toISOString() },
+    { id: 5, user_id: 1, course_id: 101, lesson_id: 10121, completed: true, progress_percentage: 100, last_accessed: new Date(Date.now() - 7 * 86400000).toISOString() },
+    { id: 6, user_id: 1, course_id: 101, lesson_id: 10122, completed: true, progress_percentage: 100, last_accessed: new Date(Date.now() - 7 * 86400000).toISOString() },
+    { id: 7, user_id: 1, course_id: 101, lesson_id: 10131, completed: true, progress_percentage: 100, last_accessed: new Date(Date.now() - 7 * 86400000).toISOString() },
+    { id: 8, user_id: 1, course_id: 101, lesson_id: 10132, completed: true, progress_percentage: 100, last_accessed: new Date(Date.now() - 7 * 86400000).toISOString() },
+  ];
+
+  memoryStore.certificateAuditLogs = [
+    {
+      id: 1,
+      certificate_id: 1,
+      action: 'GENERATED',
+      performed_by: 1,
+      reason: 'Course completed. Certificate generated in pending approval status.',
+      metadata: { certificate_id: 'MOES-2026-7B9A2F1C', sha256_hash: '3af57f09574aa4973507955f0296a44a0f6a6dac325dbcead8dbca74ac831974' },
+      timestamp: new Date(Date.now() - 7 * 86400000).toISOString(),
+    },
+    {
+      id: 2,
+      certificate_id: 1,
+      action: 'APPROVED',
+      performed_by: 3,
+      reason: 'Course completion verified and approved by administrator Marcus Vance.',
+      metadata: { approved_at: new Date(Date.now() - 6 * 86400000).toISOString() },
+      timestamp: new Date(Date.now() - 6 * 86400000).toISOString(),
+    },
+    {
+      id: 3,
+      certificate_id: 2,
+      action: 'GENERATED',
+      performed_by: 1,
+      reason: 'Course completed. Certificate generated in pending approval status.',
+      metadata: { certificate_id: 'MOES-2026-4A2D8F9E', sha256_hash: '488963426e4940c06cdaee3da389ad3ef7b1de276facdde47dd987db819262b1' },
+      timestamp: new Date(Date.now() - 2 * 86400000).toISOString(),
+    }
+  ];
+
+  memoryStore.certificates = [
+    {
+      id: 1,
+      certificate_id: 'MOES-2026-7B9A2F1C',
+      certificate_hash: 'MOES-2026-7B9A2F1C',
+      user_id: 1,
+      user_name: 'Alex Johnson',
+      trainee_name_snapshot: 'Alex Johnson',
+      course_id: 1,
+      course_name_snapshot: 'Full-Stack Enterprise Architecture & Microservices',
+      assessment_id: null,
+      title: 'Full-Stack Enterprise Architecture & Microservices',
+      issuing_organization: 'Ministry of Earth Sciences - Capacity Connect',
+      sha256_hash: '3af57f09574aa4973507955f0296a44a0f6a6dac325dbcead8dbca74ac831974',
+      status: 'approved',
+      issued_date: '2026-02-28T10:00:00.000Z',
+      completion_date: '2026-02-28',
+      approved_by: 3,
+      approved_at: new Date(Date.now() - 6 * 86400000).toISOString(),
+      rejected_by: null,
+      rejected_at: null,
+      rejection_reason: null,
+      revoked_by: null,
+      revoked_at: null,
+      revocation_reason: null,
+      verification_count: 14,
+      last_verified_at: new Date(Date.now() - 1 * 86400000).toISOString(),
+      verification_url: 'http://localhost:5173/certificates/verify/MOES-2026-7B9A2F1C',
+      metadata: { department: 'Software Engineering', grade: 'Distinction' }
+    },
+    {
+      id: 2,
+      certificate_id: 'MOES-2026-4A2D8F9E',
+      certificate_hash: 'MOES-2026-4A2D8F9E',
+      user_id: 1,
+      user_name: 'Alex Johnson',
+      trainee_name_snapshot: 'Alex Johnson',
+      course_id: 2,
+      course_name_snapshot: 'Data Science & Machine Learning Pipeline Engineering',
+      assessment_id: null,
+      title: 'Data Science & Machine Learning Pipeline Engineering',
+      issuing_organization: 'Ministry of Earth Sciences - Capacity Connect',
+      sha256_hash: '488963426e4940c06cdaee3da389ad3ef7b1de276facdde47dd987db819262b1',
+      status: 'pending_approval',
+      issued_date: '2026-03-03T14:30:00.000Z',
+      completion_date: '2026-03-03',
+      approved_by: null,
+      approved_at: null,
+      rejected_by: null,
+      rejected_at: null,
+      rejection_reason: null,
+      revoked_by: null,
+      revoked_at: null,
+      revocation_reason: null,
+      verification_count: 0,
+      last_verified_at: null,
+      verification_url: 'http://localhost:5173/certificates/verify/MOES-2026-4A2D8F9E',
+      metadata: { department: 'Data Science & AI' }
+    }
+  ];
+};
 const connectDb = async () => {
   try {
     pool = new Pool({
@@ -203,7 +304,6 @@ const query = async (text, params) => {
   if (isPgConnected && pool) {
     return pool.query(text, params);
   }
-  // Memory store fallback handler (simulated responses)
   return { rows: [], rowCount: 0 };
 };
 

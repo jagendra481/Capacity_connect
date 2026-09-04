@@ -19,12 +19,72 @@ const getAllCertificates = async (req, res, next) => {
   }
 };
 
-const updateCertificateStatus = async (req, res, next) => {
+const claimCertificate = async (req, res, next) => {
+  try {
+    const { courseId, assessmentId, title } = req.body;
+    if (!courseId) {
+      return response.error(res, 'Course ID is required to claim certificate', 400);
+    }
+    const result = await certificateService.claimCertificate({
+      userId: req.user.id,
+      courseId,
+      assessmentId,
+      title,
+    });
+    return response.success(res, result.certificate, result.message, 201);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const checkEligibility = async (req, res, next) => {
+  try {
+    const { courseId } = req.params;
+    const result = await certificateService.checkEligibility(req.user.id, courseId);
+    return response.success(res, result, 'Eligibility evaluation completed', 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const approveCertificate = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
-    const data = await certificateService.updateCertificateStatus(id, status);
-    return response.success(res, data, `Certificate status updated to ${status}`, 200);
+    const { reason } = req.body;
+    const data = await certificateService.approveCertificate(id, req.user.id, reason);
+    return response.success(res, data, 'Certificate approved and verified successfully', 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const rejectCertificate = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+    const data = await certificateService.rejectCertificate(id, req.user.id, reason);
+    return response.success(res, data, 'Certificate request rejected', 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const revokeCertificate = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+    const data = await certificateService.revokeCertificate(id, req.user.id, reason);
+    return response.success(res, data, 'Certificate revoked successfully', 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getCertificateAuditTrail = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const data = await certificateService.getCertificateAuditTrail(id);
+    return response.success(res, data, 'Certificate audit trail retrieved successfully', 200);
   } catch (error) {
     next(error);
   }
@@ -32,25 +92,9 @@ const updateCertificateStatus = async (req, res, next) => {
 
 const verifyCertificate = async (req, res, next) => {
   try {
-    const { hash } = req.params;
-    const data = await certificateService.verifyCertificate(hash);
+    const identifier = req.params.identifier || req.params.hash || req.query.id;
+    const data = await certificateService.verifyCertificate(identifier);
     return response.success(res, data, 'Certificate verification completed', 200);
-  } catch (error) {
-    next(error);
-  }
-};
-
-const generateCertificate = async (req, res, next) => {
-  try {
-    const { courseId, assessmentId, title, status } = req.body;
-    const data = await certificateService.generateCertificate({
-      userId: req.user.id,
-      courseId,
-      assessmentId,
-      title,
-      status: status || 'pending',
-    });
-    return response.success(res, data, 'Certificate request submitted successfully', 201);
   } catch (error) {
     next(error);
   }
@@ -59,7 +103,11 @@ const generateCertificate = async (req, res, next) => {
 module.exports = {
   getMyCertificates,
   getAllCertificates,
-  updateCertificateStatus,
+  claimCertificate,
+  checkEligibility,
+  approveCertificate,
+  rejectCertificate,
+  revokeCertificate,
+  getCertificateAuditTrail,
   verifyCertificate,
-  generateCertificate,
 };

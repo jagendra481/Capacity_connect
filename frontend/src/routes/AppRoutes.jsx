@@ -83,6 +83,7 @@ import AdminDashboard from '../pages/admin/AdminDashboard';
 import UserManagementPage from '../pages/admin/UserManagement';
 import DepartmentManagementPage from '../pages/admin/DepartmentManagement';
 import AnalyticsPage from '../pages/admin/Analytics';
+import CertificateManagement from '../pages/admin/CertificateManagement';
 
 // Shell Layout Wrapper
 const AppLayout = ({ children }) => {
@@ -121,6 +122,7 @@ export const AppRoutes = () => {
       <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/verify-certificate" element={<CertificateVerification />} />
       <Route path="/certificates/verify/:hash" element={<CertificateVerify />} />
       <Route path="/certificates/verify" element={<CertificateVerification />} />
 
@@ -237,6 +239,16 @@ export const AppRoutes = () => {
       />
       <Route
         path="/certificates"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <Certificates />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/trainee/certificates"
         element={
           <ProtectedRoute>
             <AppLayout>
@@ -505,6 +517,16 @@ export const AppRoutes = () => {
           <ProtectedRoute allowedRoles={['administrator']}>
             <AppLayout>
               <CapacityRadarPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/certificates"
+        element={
+          <ProtectedRoute allowedRoles={['administrator']}>
+            <AppLayout>
+              <CertificateManagement />
             </AppLayout>
           </ProtectedRoute>
         }

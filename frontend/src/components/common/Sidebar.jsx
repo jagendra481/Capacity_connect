@@ -45,6 +45,7 @@ export const Sidebar = ({ isOpen }) => {
 
   const adminLinks = [
     { to: '/admin/dashboard', label: 'Admin Dashboard', icon: LayoutDashboard },
+    { to: '/admin/certificates', label: 'Certificate Approvals', icon: Award },
     { to: '/admin/capacity-radar', label: 'Capacity Radar USP', icon: Radar },
     { to: '/admin/users', label: 'User Management', icon: Users },
     { to: '/admin/analytics', label: 'Competency Analytics', icon: BarChart3 },
