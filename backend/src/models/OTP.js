@@ -50,6 +50,41 @@ class OTPModel {
     return { canResend: true, retryAfter: 0 };
   }
 
+  static async findActiveOTP({ email, purpose = 'email_verification' }) {
+    const cleanEmail = String(email).trim().toLowerCase();
+
+    if (db.getIsPgConnected()) {
+      const res = await db.query(
+        `SELECT * FROM email_verification_otps 
+         WHERE LOWER(email) = LOWER($1) AND purpose = $2 AND expires_at > CURRENT_TIMESTAMP AND verified_at IS NULL
+         ORDER BY id DESC LIMIT 1`,
+        [cleanEmail, purpose]
+      );
+      const record = res.rows[0];
+      if (!record) return null;
+      return {
+        otpHash: record.otp_hash,
+        cleanEmail,
+        createdAt: new Date(record.created_at).getTime(),
+        expiresAt: new Date(record.expires_at).getTime(),
+      };
+    }
+
+    if (!db.memoryStore.otps) db.memoryStore.otps = [];
+    const record = db.memoryStore.otps
+      .filter(o => o.email === cleanEmail && o.purpose === purpose && !o.verified_at && Date.now() < o.expires_at)
+      .pop();
+
+    if (!record) return null;
+    return {
+      otpCode: record.otp_code,
+      otpHash: record.otp_hash,
+      cleanEmail,
+      createdAt: record.created_at,
+      expiresAt: record.expires_at,
+    };
+  }
+
   static async createOTP({ userId = null, email, purpose = 'email_verification' }) {
     const cleanEmail = String(email).trim().toLowerCase();
     
@@ -62,7 +97,7 @@ class OTPModel {
       throw err;
     }
 
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpCode = crypto.randomInt(100000, 1000000).toString();
     const otpHash = this.hashOTP(otpCode);
     const createdAt = new Date();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
