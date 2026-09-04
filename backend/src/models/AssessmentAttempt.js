@@ -1,18 +1,6 @@
 const db = require('../config/database');
 
-const demoAttempts = [
-  {
-    id: 1,
-    user_id: 1,
-    assessment_id: 1,
-    assessment_title: 'Full-Stack React & Node Evaluation',
-    score: 100,
-    passed: true,
-    total_questions: 4,
-    correct_count: 4,
-    completed_at: new Date().toISOString(),
-  },
-];
+let demoAttempts = [];
 
 class AssessmentAttempt {
   static async create({ user_id, assessment_id, score, passed, total_questions, correct_count, answers }) {
@@ -52,6 +40,19 @@ class AssessmentAttempt {
       return res.rows;
     }
     return demoAttempts.filter(a => a.user_id === parseInt(userId));
+  }
+
+  static async deleteByUserId(userId) {
+    const numericId = parseInt(userId);
+
+    if (db.getIsPgConnected()) {
+      await db.query('DELETE FROM assessment_attempts WHERE user_id = $1', [numericId]);
+      return;
+    }
+
+    // Assessment history uses a local demo collection when PostgreSQL is offline.
+    // Clear that collection as well so an ID-scoped reset is reflected immediately.
+    demoAttempts = demoAttempts.filter(attempt => attempt.user_id !== numericId);
   }
 }
 

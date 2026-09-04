@@ -12,9 +12,9 @@ class GamificationService {
     const history = await XPTransaction.getByUserId(userId);
 
     return {
-      totalXP: profile?.xp || 450,
-      streakDays: profile?.streak_days || 5,
-      level: Math.floor((profile?.xp || 450) / 200) + 1,
+      totalXP: profile?.xp ?? 0,
+      streakDays: profile?.streak_days ?? 0,
+      level: Math.floor((profile?.xp ?? 0) / 200) + 1,
       badges,
       xpHistory: history,
     };
@@ -30,9 +30,9 @@ class GamificationService {
           name: u.full_name,
           role: u.role,
           avatar: profile?.avatar_url,
-          xp: profile?.xp || 100,
-          streak: profile?.streak_days || 1,
-          competency: profile?.competency_score || 50,
+          xp: profile?.xp ?? 0,
+          streak: profile?.streak_days ?? 0,
+          competency: profile?.competency_score ?? 0,
         };
       })
     );

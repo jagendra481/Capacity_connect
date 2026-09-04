@@ -23,7 +23,7 @@ export const CourseDetails = () => {
   if (loading) return <Loader size="large" message="Loading course curriculum & modules..." />;
   if (!course) return <div className="p-8 text-center text-slate-400">Course not found</div>;
 
-  const firstLessonId = course.modules?.[0]?.lessons?.[0]?.id || 1001;
+  const firstLessonId = course.modules?.[0]?.lessons?.[0]?.id;
 
   return (
     <div className="space-y-6">
@@ -63,14 +63,16 @@ export const CourseDetails = () => {
           </div>
 
           <div className="w-full lg:w-80 flex-shrink-0 space-y-3">
-            <CourseProgress completedLessons={2} totalLessons={5} />
-            <Link
-              to={`/courses/${id}/lessons/${firstLessonId}`}
-              className="w-full py-3 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-brand-600/20 flex items-center justify-center space-x-2"
-            >
-              <PlayCircle className="w-5 h-5" />
-              <span>Continue Learning</span>
-            </Link>
+            <CourseProgress completedLessons={course.completedLessons} totalLessons={course.totalLessons} />
+            {firstLessonId && (
+              <Link
+                to={`/courses/${id}/lessons/${firstLessonId}`}
+                className="w-full py-3 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-brand-600/20 flex items-center justify-center space-x-2"
+              >
+                <PlayCircle className="w-5 h-5" />
+                <span>Continue Learning</span>
+              </Link>
+            )}
 
             {/* Core Feature: Ask from my course button */}
             <Link

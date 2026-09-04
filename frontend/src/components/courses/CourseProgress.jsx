@@ -1,7 +1,7 @@
 import React from 'react';
 import { BookCheck } from 'lucide-react';
 
-export const CourseProgress = ({ completedLessons = 2, totalLessons = 5 }) => {
+export const CourseProgress = ({ completedLessons = 0, totalLessons = 0 }) => {
   const percentage = Math.round((completedLessons / Math.max(totalLessons, 1)) * 100);
 
   return (

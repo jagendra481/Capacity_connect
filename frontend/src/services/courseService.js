@@ -9,8 +9,8 @@ export const courseService = {
     return api.get(`/courses/${id}`);
   },
 
-  getLessonDetails: async (lessonId) => {
-    return api.get(`/courses/lessons/${lessonId}`);
+  getLessonDetails: async (lessonId, courseId) => {
+    return api.get(`/courses/lessons/${lessonId}`, { params: { courseId } });
   },
 
   createCourse: async (data) => {

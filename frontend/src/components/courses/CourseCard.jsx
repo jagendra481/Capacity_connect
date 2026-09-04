@@ -35,6 +35,15 @@ export const CourseCard = ({ course }) => {
       </div>
 
       <div className="p-5 pt-0 space-y-4">
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400">
+            <span>{course.completedLessons || 0} of {course.totalLessons || 0} lessons</span>
+            <span className="text-brand-400">{course.progressPercentage || 0}%</span>
+          </div>
+          <div className="h-1.5 overflow-hidden rounded-full bg-slate-950 border border-slate-800">
+            <div className="h-full rounded-full bg-brand-500" style={{ width: `${course.progressPercentage || 0}%` }} />
+          </div>
+        </div>
         <div className="flex items-center justify-between text-xs text-slate-400 pt-3 border-t border-slate-800">
           <span className="flex items-center space-x-1">
             <Clock className="w-3.5 h-3.5 text-slate-500" />

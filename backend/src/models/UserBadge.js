@@ -1,5 +1,4 @@
 const db = require('../config/database');
-const Badge = require('./Badge');
 
 class UserBadge {
   static async getByUserId(userId) {
@@ -13,12 +12,7 @@ class UserBadge {
       );
       return res.rows;
     }
-    const allBadges = await Badge.getAll();
-    return allBadges.map(b => ({
-      ...b,
-      badge_id: b.id,
-      earned_at: new Date().toISOString(),
-    }));
+    return db.memoryStore.userBadges.filter(badge => badge.user_id === parseInt(userId));
   }
 }
 

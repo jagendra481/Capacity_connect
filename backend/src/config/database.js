@@ -98,27 +98,27 @@ const initializeMemoryStore = async () => {
       designation: 'Junior Full-Stack Engineer',
       bio: 'Enthusiastic developer focusing on modern web apps and cloud architecture.',
       avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250',
-      xp: 450,
-      streak_days: 5,
-      competency_score: 72
+      xp: 0,
+      streak_days: 0,
+      competency_score: 0
     },
     {
       user_id: 2,
       designation: 'Principal Technical Trainer',
       bio: 'Over 10 years of enterprise training experience in distributed systems.',
       avatar_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=250',
-      xp: 1200,
-      streak_days: 14,
-      competency_score: 95
+      xp: 0,
+      streak_days: 0,
+      competency_score: 0
     },
     {
       user_id: 3,
       designation: 'Chief Capacity Officer',
       bio: 'Overseeing organizational skill development and strategic capacity growth.',
       avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=250',
-      xp: 2500,
-      streak_days: 30,
-      competency_score: 98
+      xp: 0,
+      streak_days: 0,
+      competency_score: 0
     }
   ];
 

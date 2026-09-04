@@ -13,6 +13,10 @@ export const adminService = {
     return api.put(`/admin/users/${id}/role`, { role });
   },
 
+  resetUserProgress: async (id) => {
+    return api.post(`/admin/users/${id}/reset-progress`);
+  },
+
   getDepartments: async () => {
     return api.get('/admin/departments');
   },

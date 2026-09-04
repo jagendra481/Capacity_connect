@@ -4,7 +4,7 @@ const response = require('../utils/response');
 const getCourses = async (req, res, next) => {
   try {
     const { search, category, level } = req.query;
-    const courses = await courseService.getCourses({ search, category, level });
+    const courses = await courseService.getCourses({ search, category, level, userId: req.user.id });
     return response.success(res, courses, 'Courses retrieved successfully', 200);
   } catch (error) {
     next(error);
@@ -14,7 +14,7 @@ const getCourses = async (req, res, next) => {
 const getCourseById = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const course = await courseService.getCourseById(id);
+    const course = await courseService.getCourseById(id, req.user.id);
     return response.success(res, course, 'Course details retrieved', 200);
   } catch (error) {
     next(error);
@@ -24,7 +24,7 @@ const getCourseById = async (req, res, next) => {
 const getLessonDetails = async (req, res, next) => {
   try {
     const { lessonId } = req.params;
-    const lesson = await courseService.getLessonDetails(lessonId);
+    const lesson = await courseService.getLessonDetails(lessonId, req.user.id, req.query.courseId);
     return response.success(res, lesson, 'Lesson details retrieved', 200);
   } catch (error) {
     next(error);

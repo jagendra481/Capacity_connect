@@ -16,7 +16,7 @@ class TrainerService {
           name: t.full_name,
           email: t.email,
           role: t.role,
-          competencyScore: profile?.competency_score || 70,
+          competencyScore: profile?.competency_score ?? 0,
           completedCourses: 2,
           activeAssessments: 1,
           status: 'Active',

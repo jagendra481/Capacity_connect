@@ -79,9 +79,9 @@ class User {
             designation || cleanRole.toUpperCase(),
             `New ${cleanRole} member`,
             avatarUrl,
-            100,
-            1,
-            50
+            0,
+            0,
+            0
           ]
         );
       } catch (err) {
@@ -115,9 +115,9 @@ class User {
       designation: designation || cleanRole.toUpperCase(),
       bio: `New ${cleanRole} member`,
       avatar_url: avatarUrl,
-      xp: 100,
-      streak_days: 1,
-      competency_score: 50
+      xp: 0,
+      streak_days: 0,
+      competency_score: 0
     });
 
     const { password_hash: ph, ...userClean } = newUser;

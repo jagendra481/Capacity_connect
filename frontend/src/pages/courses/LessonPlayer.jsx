@@ -15,7 +15,7 @@ export const LessonPlayer = () => {
 
   useEffect(() => {
     setLoading(true);
-    courseService.getLessonDetails(lessonId)
+    courseService.getLessonDetails(lessonId, courseId)
       .then(res => {
         if (res.data) {
           setLesson(res.data);

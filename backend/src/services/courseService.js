@@ -6,10 +6,17 @@ const CourseProgress = require('../models/CourseProgress');
 
 class CourseService {
   async getCourses(filters = {}) {
-    return Course.getAll(filters);
+    const { userId, ...courseFilters } = filters;
+    const courses = await Course.getAll(courseFilters);
+    if (!userId) return courses;
+
+    return Promise.all(courses.map(async course => ({
+      ...course,
+      ...await this.getCourseProgressSummary(userId, course.id),
+    })));
   }
 
-  async getCourseById(courseId) {
+  async getCourseById(courseId, userId) {
     const course = await Course.findById(courseId);
     if (!course) {
       const err = new Error('Course not found.');
@@ -17,13 +24,19 @@ class CourseService {
       throw err;
     }
     const modules = await CourseModule.getByCourseId(courseId);
+    const summary = userId ? await this.getCourseProgressSummary(userId, courseId, modules) : {};
+    const completedLessonIds = new Set(summary.completedLessonIds || []);
     return {
       ...course,
-      modules,
+      ...summary,
+      modules: modules.map(module => ({
+        ...module,
+        lessons: module.lessons.map(lesson => ({ ...lesson, completed: completedLessonIds.has(lesson.id) })),
+      })),
     };
   }
 
-  async getLessonDetails(lessonId) {
+  async getLessonDetails(lessonId, userId, courseId) {
     const lesson = await Lesson.findById(lessonId);
     if (!lesson) {
       const err = new Error('Lesson not found.');
@@ -31,9 +44,11 @@ class CourseService {
       throw err;
     }
     const resources = await Resource.getByLessonId(lessonId);
+    const progress = userId && courseId ? await CourseProgress.getByUserAndCourse(userId, courseId) : [];
     return {
       ...lesson,
       resources,
+      completed: progress.some(entry => entry.lesson_id === parseInt(lessonId) && entry.completed),
     };
   }
 
@@ -42,13 +57,38 @@ class CourseService {
   }
 
   async updateLessonProgress(userId, courseId, lessonId, completed = true) {
-    // Record progress state
+    const course = await Course.findById(courseId);
+    if (!course) {
+      const err = new Error('Course not found.');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    const modules = await CourseModule.getByCourseId(courseId);
+    const lessonExists = modules.some(module => module.lessons.some(lesson => lesson.id === parseInt(lessonId)));
+    if (!lessonExists) {
+      const err = new Error('Lesson does not belong to this course.');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    await CourseProgress.setLessonCompletion(userId, courseId, lessonId, completed);
+    return this.getCourseProgressSummary(userId, courseId, modules);
+  }
+
+  async getCourseProgressSummary(userId, courseId, modules) {
+    const courseModules = modules || await CourseModule.getByCourseId(courseId);
+    const lessons = courseModules.flatMap(module => module.lessons || []);
+    const progress = await CourseProgress.getByUserAndCourse(userId, courseId);
+    const completedLessonIds = progress.filter(entry => entry.completed).map(entry => entry.lesson_id);
+    const completedLessons = lessons.filter(lesson => completedLessonIds.includes(lesson.id)).length;
+    const totalLessons = lessons.length;
+
     return {
-      userId,
-      courseId,
-      lessonId,
-      completed,
-      updated_at: new Date().toISOString(),
+      completedLessons,
+      totalLessons,
+      progressPercentage: totalLessons === 0 ? 0 : Math.round((completedLessons / totalLessons) * 100),
+      completedLessonIds,
     };
   }
 }

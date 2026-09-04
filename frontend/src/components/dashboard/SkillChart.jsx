@@ -11,13 +11,7 @@ import {
 } from 'recharts';
 
 export const SkillChart = ({ competencies = [] }) => {
-  const chartData = competencies.length > 0 ? competencies : [
-    { skill: 'React.js', required: 85, current: 75 },
-    { skill: 'Node.js', required: 80, current: 65 },
-    { skill: 'PostgreSQL', required: 75, current: 80 },
-    { skill: 'AI RAG', required: 90, current: 55 },
-    { skill: 'DevOps', required: 70, current: 60 },
-  ];
+  const chartData = competencies;
 
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-4">

@@ -44,23 +44,23 @@ export const SkillGapAnalysis = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
           <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Skills Assessed</span>
-          <p className="text-2xl font-bold text-slate-100 mt-1">{data.totalSkillsAssessed || 5} Skills</p>
+          <p className="text-2xl font-bold text-slate-100 mt-1">{data.totalSkillsAssessed ?? 0} Skills</p>
         </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
           <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Critical Gaps</span>
-          <p className="text-2xl font-bold text-red-400 mt-1">{data.criticalGapsCount || 1} Skills</p>
+          <p className="text-2xl font-bold text-red-400 mt-1">{data.criticalGapsCount ?? 0} Skills</p>
           <p className="text-xs text-red-400 mt-0.5">Urgent intervention recommended</p>
         </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
           <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Medium Gaps</span>
-          <p className="text-2xl font-bold text-amber-400 mt-1">{data.mediumGapsCount || 2} Skills</p>
+          <p className="text-2xl font-bold text-amber-400 mt-1">{data.mediumGapsCount ?? 0} Skills</p>
         </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
           <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Low / On Target</span>
-          <p className="text-2xl font-bold text-emerald-400 mt-1">{data.lowGapsCount || 2} Skills</p>
+          <p className="text-2xl font-bold text-emerald-400 mt-1">{data.lowGapsCount ?? 0} Skills</p>
         </div>
       </div>
 

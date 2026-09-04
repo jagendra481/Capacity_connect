@@ -1,8 +1,11 @@
 const User = require('../models/User');
 const UserProfile = require('../models/UserProfile');
 const Department = require('../models/Department');
-const Competency = require('../models/Competency');
 const Recommendation = require('../models/Recommendation');
+const CourseProgress = require('../models/CourseProgress');
+const Course = require('../models/Course');
+const CourseModule = require('../models/CourseModule');
+const skillGapService = require('./skillGapService');
 
 class UserService {
   async getUserProfile(userId) {
@@ -47,8 +50,34 @@ class UserService {
 
   async getTraineeDashboardData(userId) {
     const user = await this.getUserProfile(userId);
-    const competencies = await Competency.getByUserId(userId);
+    const skillGapData = await skillGapService.getIndividualSkillGap(userId);
+    const competencies = skillGapData.gaps.map(gap => ({
+      skill: gap.skill_name,
+      required: gap.required_level,
+      current: gap.current_level,
+    }));
     const recommendations = await Recommendation.getByUserId(userId);
+    const courseProgress = await CourseProgress.getByUserId(userId);
+    const courses = await Course.getAll();
+    const modulesByCourse = await Promise.all(
+      courses.map(course => CourseModule.getByCourseId(course.id))
+    );
+    const lessons = modulesByCourse.flatMap((modules, courseIndex) =>
+      modules.flatMap(module => module.lessons.map(lesson => ({
+        course_id: courses[courseIndex].id,
+        lesson_id: lesson.id,
+      })))
+    );
+    const completedKeys = new Set(
+      courseProgress
+        .filter(entry => entry.completed)
+        .map(entry => `${entry.course_id}:${entry.lesson_id}`)
+    );
+    const completedLessons = lessons.filter(
+      lesson => completedKeys.has(`${lesson.course_id}:${lesson.lesson_id}`)
+    ).length;
+    const totalLessons = lessons.length;
+    const learningProgress = totalLessons === 0 ? 0 : Math.round((completedLessons / totalLessons) * 100);
 
     const pendingAssessments = [
       {
@@ -92,10 +121,12 @@ class UserService {
 
     return {
       user,
-      learningProgress: 68,
-      competencyScore: user.profile?.competency_score || 72,
-      learningStreak: user.profile?.streak_days || 5,
-      xpPoints: user.profile?.xp || 450,
+      learningProgress,
+      completedLessons,
+      totalLessons,
+      competencyScore: user.profile?.competency_score ?? 0,
+      learningStreak: user.profile?.streak_days ?? 0,
+      xpPoints: user.profile?.xp ?? 0,
       competencies,
       recommendations,
       pendingAssessments,

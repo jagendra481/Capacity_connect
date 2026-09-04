@@ -53,8 +53,12 @@ export const TraineeDashboard = () => {
 
       {/* Primary KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <ProgressCard progress={data.learningProgress || 68} />
-        <CompetencyCard score={data.competencyScore || profile.competency_score || 72} />
+        <ProgressCard
+          progress={data.learningProgress ?? 0}
+          completedLessons={data.completedLessons ?? 0}
+          totalLessons={data.totalLessons ?? 0}
+        />
+        <CompetencyCard score={data.competencyScore ?? profile.competency_score ?? 0} />
 
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-3">
           <div className="flex items-center justify-between">
@@ -64,11 +68,11 @@ export const TraineeDashboard = () => {
             </div>
           </div>
           <div className="flex items-baseline space-x-2">
-            <span className="text-3xl font-extrabold text-white">{data.learningStreak || profile.streak_days || 5}</span>
+            <span className="text-3xl font-extrabold text-white">{data.learningStreak ?? profile.streak_days ?? 0}</span>
             <span className="text-sm text-slate-400 font-medium">Days</span>
           </div>
           <p className="text-xs text-amber-400 font-semibold flex items-center space-x-1">
-            <span>+{data.xpPoints || profile.xp || 450} Total XP Earned</span>
+            <span>+{data.xpPoints ?? profile.xp ?? 0} Total XP Earned</span>
           </p>
         </div>
 

@@ -1,28 +1,7 @@
 const db = require('../config/database');
 const crypto = require('crypto');
 
-const demoCertificates = [
-  {
-    id: 1,
-    certificate_hash: 'CC-CERT-9A8B7C6D5E4F',
-    user_id: 1,
-    user_name: 'Alex Johnson',
-    course_id: 101,
-    title: 'Advanced React State & Micro-Frontend Architecture Mastery',
-    issued_date: new Date(Date.now() - 604800000).toISOString(),
-    verification_url: 'http://localhost:5173/certificates/verify/CC-CERT-9A8B7C6D5E4F',
-  },
-  {
-    id: 2,
-    certificate_hash: 'CC-CERT-1F2E3D4C5B6A',
-    user_id: 1,
-    user_name: 'Alex Johnson',
-    assessment_id: 1,
-    title: 'Full-Stack React & Node Technical Assessment Certification',
-    issued_date: new Date().toISOString(),
-    verification_url: 'http://localhost:5173/certificates/verify/CC-CERT-1F2E3D4C5B6A',
-  },
-];
+const demoCertificates = [];
 
 class Certificate {
   static async getByUserId(userId) {

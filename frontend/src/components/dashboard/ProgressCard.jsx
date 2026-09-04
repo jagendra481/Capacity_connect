@@ -1,7 +1,7 @@
 import React from 'react';
 import { BookOpen } from 'lucide-react';
 
-export const ProgressCard = ({ progress = 68 }) => {
+export const ProgressCard = ({ progress = 0, completedLessons = 0, totalLessons = 0 }) => {
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-3">
       <div className="flex items-center justify-between">
@@ -12,7 +12,7 @@ export const ProgressCard = ({ progress = 68 }) => {
       </div>
       <div className="flex items-end justify-between">
         <span className="text-2xl font-bold text-slate-100">{progress}%</span>
-        <span className="text-xs text-brand-400 font-medium">8/12 Modules Done</span>
+        <span className="text-xs text-brand-400 font-medium">{completedLessons}/{totalLessons} Lessons Done</span>
       </div>
       <div className="w-full bg-slate-950 rounded-full h-2.5 overflow-hidden border border-slate-800">
         <div

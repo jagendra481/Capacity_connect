@@ -18,7 +18,7 @@ class SkillGap {
 
   static async getGapsForUser(userId, roleSkills = [], userSkills = []) {
     const gapAnalysis = roleSkills.map((rs) => {
-      const us = userSkills.find(s => s.skill_id === rs.skill_id) || { current_level: 50 };
+      const us = userSkills.find(s => s.skill_id === rs.skill_id) || { current_level: 0 };
       const currentLevel = us.current_level;
       const requiredLevel = rs.required_level;
       const { gap, severity } = this.calculateGap(requiredLevel, currentLevel);

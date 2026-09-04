@@ -43,8 +43,8 @@ export const Achievements = () => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <XPCard totalXP={data?.totalXP || 450} level={data?.level || 3} />
-        <StreakCard streakDays={data?.streakDays || 5} />
+        <XPCard totalXP={data?.totalXP ?? 0} level={data?.level ?? 1} />
+        <StreakCard streakDays={data?.streakDays ?? 0} />
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Badges Unlocked</span>

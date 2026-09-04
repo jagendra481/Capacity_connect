@@ -1,15 +1,5 @@
 const db = require('../config/database');
 
-const defaultUserSkills = {
-  1: [
-    { user_id: 1, skill_id: 1, skill_name: 'React.js Architecture', current_level: 75 },
-    { user_id: 1, skill_id: 2, skill_name: 'Node.js Microservices', current_level: 65 },
-    { user_id: 1, skill_id: 3, skill_name: 'PostgreSQL Database Tuning', current_level: 80 },
-    { user_id: 1, skill_id: 4, skill_name: 'AI RAG & Embeddings', current_level: 55 },
-    { user_id: 1, skill_id: 5, skill_name: 'Cyber Security & DevSecOps', current_level: 60 },
-  ],
-};
-
 class UserSkill {
   static async getByUserId(userId) {
     if (db.getIsPgConnected()) {
@@ -22,7 +12,7 @@ class UserSkill {
       );
       return res.rows;
     }
-    return defaultUserSkills[parseInt(userId)] || defaultUserSkills[1];
+    return db.memoryStore.userSkills.filter(skill => skill.user_id === parseInt(userId));
   }
 
   static async updateSkillLevel(userId, skillId, newLevel) {
@@ -37,10 +27,16 @@ class UserSkill {
       return res.rows[0];
     }
 
-    const list = defaultUserSkills[parseInt(userId)] || defaultUserSkills[1];
-    const skill = list.find(s => s.skill_id === parseInt(skillId));
+    const numericUserId = parseInt(userId);
+    const numericSkillId = parseInt(skillId);
+    let skill = db.memoryStore.userSkills.find(
+      entry => entry.user_id === numericUserId && entry.skill_id === numericSkillId
+    );
     if (skill) {
       skill.current_level = newLevel;
+    } else {
+      skill = { user_id: numericUserId, skill_id: numericSkillId, current_level: newLevel };
+      db.memoryStore.userSkills.push(skill);
     }
     return skill;
   }

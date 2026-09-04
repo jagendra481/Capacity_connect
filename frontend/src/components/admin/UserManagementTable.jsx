@@ -1,7 +1,28 @@
-import React from 'react';
-import { Users, Shield } from 'lucide-react';
+import React, { useState } from 'react';
+import { Users, Shield, RotateCcw } from 'lucide-react';
+import adminService from '../../services/adminService';
 
-export const UserManagementTable = ({ users = [], onRoleChange }) => {
+export const UserManagementTable = ({ users = [], onRoleChange, onDataRefresh }) => {
+  const [resettingId, setResettingId] = useState(null);
+
+  const handleResetProgress = async (user) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to reset ALL scores and progress for "${user.full_name}"?\n\nThis will clear:\n- Course progress & completion\n- Assessment scores & attempts\n- Skill levels\n- XP points & streaks\n- Badges & certificates\n\nThis action cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    setResettingId(user.id);
+    try {
+      await adminService.resetUserProgress(user.id);
+      alert(`All scores and progress for "${user.full_name}" have been reset successfully.`);
+      if (onDataRefresh) onDataRefresh();
+    } catch (error) {
+      alert(`Failed to reset progress: ${error}`);
+    } finally {
+      setResettingId(null);
+    }
+  };
+
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
       <div className="p-4 border-b border-slate-800 flex items-center justify-between">
@@ -19,7 +40,8 @@ export const UserManagementTable = ({ users = [], onRoleChange }) => {
               <th className="px-5 py-3">Full Name</th>
               <th className="px-5 py-3">Email Address</th>
               <th className="px-5 py-3">Current Role</th>
-              <th className="px-5 py-3 text-right">Role Authorization</th>
+              <th className="px-5 py-3">Role Authorization</th>
+              <th className="px-5 py-3 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/60">
@@ -32,7 +54,7 @@ export const UserManagementTable = ({ users = [], onRoleChange }) => {
                     {u.role}
                   </span>
                 </td>
-                <td className="px-5 py-3.5 text-right">
+                <td className="px-5 py-3.5">
                   <select
                     value={u.role}
                     onChange={(e) => onRoleChange(u.id, e.target.value)}
@@ -42,6 +64,17 @@ export const UserManagementTable = ({ users = [], onRoleChange }) => {
                     <option value="trainer">Trainer</option>
                     <option value="administrator">Administrator</option>
                   </select>
+                </td>
+                <td className="px-5 py-3.5 text-right">
+                  <button
+                    onClick={() => handleResetProgress(u)}
+                    disabled={resettingId === u.id}
+                    className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white text-[11px] font-bold rounded-lg border border-red-500/30 hover:border-red-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={`Reset all scores and progress for ${u.full_name}`}
+                  >
+                    <RotateCcw className={`w-3.5 h-3.5 ${resettingId === u.id ? 'animate-spin' : ''}`} />
+                    <span>{resettingId === u.id ? 'Resetting...' : 'Reset Progress'}</span>
+                  </button>
                 </td>
               </tr>
             ))}
@@ -53,3 +86,4 @@ export const UserManagementTable = ({ users = [], onRoleChange }) => {
 };
 
 export default UserManagementTable;
+

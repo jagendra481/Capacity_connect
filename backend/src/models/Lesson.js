@@ -1,16 +1,27 @@
 const db = require('../config/database');
+const CourseModule = require('./CourseModule');
 
 class Lesson {
   static async findById(id) {
     if (db.getIsPgConnected()) {
-      const res = await db.query('SELECT * FROM lessons WHERE id = $1', [id]);
+      const res = await db.query(
+        `SELECT l.*, cm.course_id
+         FROM lessons l
+         JOIN course_modules cm ON cm.id = l.module_id
+         WHERE l.id = $1`,
+        [id]
+      );
       return res.rows[0];
     }
+    const numericLessonId = parseInt(id);
+    const courseId = Math.floor(numericLessonId / 100);
+    const modules = await CourseModule.getByCourseId(courseId);
+    const lesson = modules.flatMap(module => module.lessons.map(item => ({ ...item, module_id: module.id })))
+      .find(item => item.id === numericLessonId);
+    if (!lesson) return null;
     return {
-      id: parseInt(id),
-      module_id: 1,
-      course_id: 101,
-      title: '1.1 System Architecture & Design Paradigms',
+      ...lesson,
+      course_id: courseId,
       content: `### Lesson Overview
 
 Welcome to this comprehensive technical lesson. In this module, we explore modern enterprise software design principles.

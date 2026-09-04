@@ -1,6 +1,16 @@
 const adminService = require('../services/adminService');
 const response = require('../utils/response');
 
+const resetUserProgress = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const data = await adminService.resetUserProgress(id);
+    return response.success(res, data, 'User scores and progress reset successfully', 200);
+  } catch (error) {
+    next(error);
+  }
+};
+
 const getOverviewStats = async (req, res, next) => {
   try {
     const data = await adminService.getOverviewStats();
@@ -67,6 +77,7 @@ const exportCapacityReport = async (req, res, next) => {
 };
 
 module.exports = {
+  resetUserProgress,
   getOverviewStats,
   getAllUsers,
   updateUserRole,

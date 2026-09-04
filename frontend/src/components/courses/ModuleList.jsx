@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import LessonCard from './LessonCard';
 import { ChevronDown, ChevronRight, Layers } from 'lucide-react';
 
 export const ModuleList = ({ modules = [], courseId }) => {
-  const [openModules, setOpenModules] = useState([1]); // First module open by default
+  const [openModules, setOpenModules] = useState(() => modules[0] ? [modules[0].id] : []);
+
+  useEffect(() => {
+    setOpenModules(modules[0] ? [modules[0].id] : []);
+  }, [modules]);
 
   const toggleModule = (id) => {
     setOpenModules(prev =>

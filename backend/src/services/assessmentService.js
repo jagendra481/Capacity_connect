@@ -57,10 +57,10 @@ class AssessmentService {
     // Update user profile competency score with assessment result
     const currentProfile = await UserProfile.getByUserId(userId);
     if (currentProfile) {
-      const newCompetencyScore = Math.round(((currentProfile.competency_score || 70) + evaluation.score) / 2);
+      const newCompetencyScore = Math.round(((currentProfile.competency_score ?? 0) + evaluation.score) / 2);
       await UserProfile.update(userId, {
         competency_score: newCompetencyScore,
-        xp: (currentProfile.xp || 450) + (passed ? 150 : 50),
+        xp: (currentProfile.xp ?? 0) + (passed ? 150 : 50),
       });
     }
 
