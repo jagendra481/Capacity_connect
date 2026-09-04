@@ -62,6 +62,18 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/capacity-radar', capacityRadarRoutes);
 
+// Serve static frontend build in production / deployment
+const path = require('path');
+const fs = require('fs');
+const frontendDistPath = path.join(__dirname, '../../frontend/dist');
+if (fs.existsSync(frontendDistPath)) {
+  app.use(express.static(frontendDistPath));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(frontendDistPath, 'index.html'));
+  });
+}
+
 // 404 & Error Handling
 app.use(notFoundHandler);
 app.use(errorHandler);
