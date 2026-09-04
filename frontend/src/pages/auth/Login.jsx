@@ -2,13 +2,60 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import GoogleLoginButton from '../../components/auth/GoogleLoginButton';
-import { getDashboardRoute } from '../../utils/roleUtils';
-import { Lock, Mail, Award, ArrowRight, ShieldCheck, AlertCircle, KeyRound, CheckCircle2, RefreshCw, UserPlus } from 'lucide-react';
+import { getDashboardRoute, ROLES } from '../../utils/roleUtils';
+import {
+  Lock,
+  Mail,
+  Award,
+  ArrowRight,
+  ShieldCheck,
+  GraduationCap,
+  UserCheck,
+  AlertCircle,
+  KeyRound,
+  CheckCircle2,
+  RefreshCw,
+  UserPlus,
+  Sparkles,
+} from 'lucide-react';
+
+const ROLE_OPTIONS = [
+  {
+    id: 'trainee',
+    label: 'Trainee',
+    subtitle: 'Learner',
+    icon: GraduationCap,
+    description: 'Access courses, take assessments, track competencies, and ask AI.',
+    badgeClass: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/30',
+    activeClass: 'bg-slate-800 border-cyan-500 text-cyan-300 shadow-lg shadow-cyan-500/10',
+  },
+  {
+    id: 'trainer',
+    label: 'Trainer',
+    subtitle: 'Instructor',
+    icon: UserCheck,
+    description: 'Manage courses, create assessments, and evaluate trainee progress.',
+    badgeClass: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30',
+    activeClass: 'bg-slate-800 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10',
+  },
+  {
+    id: 'administrator',
+    label: 'Admin',
+    subtitle: 'Platform Admin',
+    icon: ShieldCheck,
+    description: 'Manage users, departments, system analytics, and organizational capacity.',
+    badgeClass: 'text-purple-400 bg-purple-500/10 border-purple-500/30',
+    activeClass: 'bg-slate-800 border-purple-500 text-purple-300 shadow-lg shadow-purple-500/10',
+  },
+];
 
 export const Login = () => {
   const { login, loginWithGoogle, sendOTP, verifyOTP } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Selected Role Option: 'trainee' | 'trainer' | 'administrator'
+  const [selectedRole, setSelectedRole] = useState('trainee');
 
   // Auth Mode: 'password' | 'otp'
   const [loginMode, setLoginMode] = useState('password');
@@ -17,7 +64,7 @@ export const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [otpCode, setOtpCode] = useState('');
-  
+
   // OTP Flow states: 'enter_email' | 'enter_otp'
   const [otpStep, setOtpStep] = useState('enter_email');
   const [otpSentMessage, setOtpSentMessage] = useState('');
@@ -25,6 +72,24 @@ export const Login = () => {
   const [error, setError] = useState('');
   const [accountNotFound, setAccountNotFound] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const activeRoleConfig = ROLE_OPTIONS.find((r) => r.id === selectedRole) || ROLE_OPTIONS[0];
+
+  const determineDestination = (userRole) => {
+    if (location.state?.from?.pathname) {
+      return location.state.from.pathname;
+    }
+
+    // Administrators have multi-portal clearance
+    if (userRole === ROLES.ADMINISTRATOR) {
+      if (selectedRole === 'trainer') return '/trainer/dashboard';
+      if (selectedRole === 'trainee') return '/trainee/dashboard';
+      return '/admin/dashboard';
+    }
+
+    // Direct other roles to their authorized dashboard
+    return getDashboardRoute(userRole);
+  };
 
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
@@ -34,8 +99,8 @@ export const Login = () => {
 
     try {
       const res = await login({ email, password });
-      const role = res.data?.user?.role || 'trainee';
-      const destination = location.state?.from?.pathname || getDashboardRoute(role);
+      const userRole = res.data?.user?.role || 'trainee';
+      const destination = determineDestination(userRole);
       navigate(destination, { replace: true });
     } catch (err) {
       if (err?.accountNotFound || err?.statusCode === 404) {
@@ -43,7 +108,12 @@ export const Login = () => {
         setError('Account not found. Please sign up first.');
       } else if (err?.requiresEmailVerification) {
         localStorage.setItem('pending_verify_email', err.email || email);
-        navigate('/verify-email', { state: { email: err.email || email, message: 'Please verify your email before continuing.' } });
+        navigate('/verify-email', {
+          state: {
+            email: err.email || email,
+            message: 'Please verify your email before continuing.',
+          },
+        });
       } else {
         setError(err?.message || err || 'Invalid email or password.');
       }
@@ -83,8 +153,8 @@ export const Login = () => {
 
     try {
       const res = await verifyOTP(email, otpCode);
-      const role = res.data?.user?.role || 'trainee';
-      const destination = location.state?.from?.pathname || getDashboardRoute(role);
+      const userRole = res.data?.user?.role || 'trainee';
+      const destination = determineDestination(userRole);
       navigate(destination, { replace: true });
     } catch (err) {
       setError(err?.message || err || 'Invalid verification code. Please try again.');
@@ -99,8 +169,8 @@ export const Login = () => {
     setLoading(true);
     try {
       const res = await loginWithGoogle(googlePayload);
-      const role = res.data?.user?.role || 'trainee';
-      const destination = location.state?.from?.pathname || getDashboardRoute(role);
+      const userRole = res.data?.user?.role || 'trainee';
+      const destination = determineDestination(userRole);
       navigate(destination, { replace: true });
     } catch (err) {
       if (err?.accountNotFound || err?.statusCode === 404) {
@@ -114,30 +184,12 @@ export const Login = () => {
     }
   };
 
-  const handleQuickDemoLogin = async (demoEmail) => {
-    setEmail(demoEmail);
-    setPassword('Password123!');
-    setError('');
-    setAccountNotFound(false);
-    setLoading(true);
-
-    try {
-      const res = await login({ email: demoEmail, password: 'Password123!' });
-      const role = res.data?.user?.role || 'trainee';
-      const destination = getDashboardRoute(role);
-      navigate(destination, { replace: true });
-    } catch (err) {
-      setError(err?.message || err || 'Demo login failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-950 p-4 relative overflow-hidden">
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-brand-600/20 blur-[120px] rounded-full pointer-events-none" />
 
-      <div className="w-full max-w-md bg-slate-900/90 border border-slate-800 rounded-2xl p-8 shadow-2xl backdrop-blur-xl z-10">
+      <div className="w-full max-w-md bg-slate-900/90 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl z-10">
+        {/* Header Branding */}
         <div className="text-center mb-6">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-600 to-cyan-400 flex items-center justify-center mx-auto mb-3 shadow-lg shadow-brand-500/20">
             <Award className="w-7 h-7 text-white" />
@@ -146,8 +198,54 @@ export const Login = () => {
           <p className="text-sm text-slate-400 mt-1">Sign in to your Capacity Connect workspace</p>
         </div>
 
+        {/* 3 Role-Based Sign-In Selection Options */}
+        <div className="mb-5">
+          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 text-center">
+            Select Your Role
+          </label>
+          <div className="grid grid-cols-3 gap-2">
+            {ROLE_OPTIONS.map((role) => {
+              const Icon = role.icon;
+              const isSelected = selectedRole === role.id;
+              return (
+                <button
+                  key={role.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedRole(role.id);
+                    setError('');
+                  }}
+                  className={`p-2.5 sm:p-3 rounded-xl border flex flex-col items-center justify-center text-center transition-all ${
+                    isSelected
+                      ? role.activeClass
+                      : 'bg-slate-950/60 border-slate-800/80 text-slate-400 hover:text-slate-200 hover:border-slate-700 hover:bg-slate-800/40'
+                  }`}
+                >
+                  <Icon
+                    className={`w-5 h-5 mb-1.5 transition-transform ${
+                      isSelected ? 'scale-110' : 'opacity-70'
+                    }`}
+                  />
+                  <span className="text-xs font-bold leading-tight">{role.label}</span>
+                  <span className="text-[10px] text-slate-500 mt-0.5 leading-tight">{role.subtitle}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Role Context Hint */}
+          <div className="mt-2.5 p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-start space-x-2">
+            <Sparkles className="w-3.5 h-3.5 text-brand-400 flex-shrink-0 mt-0.5" />
+            <p className="text-[11px] text-slate-300 leading-snug">
+              <span className="font-semibold text-slate-200">{activeRoleConfig.label} Workspace:</span>{' '}
+              {activeRoleConfig.description}
+            </p>
+          </div>
+        </div>
+
+        {/* Error / Feedback Message */}
         {error && (
-          <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm space-y-3">
+          <div className="mb-5 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm space-y-3">
             <div className="flex items-start space-x-3">
               <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
               <span>{error}</span>
@@ -166,8 +264,8 @@ export const Login = () => {
           </div>
         )}
 
-        {/* Login Mode Toggle Tabs */}
-        <div className="grid grid-cols-2 p-1 bg-slate-950 border border-slate-800 rounded-xl mb-6 text-xs font-semibold">
+        {/* Login Mode Toggle Tabs (Password vs OTP) */}
+        <div className="grid grid-cols-2 p-1 bg-slate-950 border border-slate-800 rounded-xl mb-5 text-xs font-semibold">
           <button
             type="button"
             onClick={() => {
@@ -203,9 +301,9 @@ export const Login = () => {
         </div>
 
         {/* Google Authentication */}
-        <div className="mb-6">
+        <div className="mb-5">
           <GoogleLoginButton onGoogleSuccess={handleGoogleSuccess} label="Continue with Google" />
-          <div className="relative my-6 text-center">
+          <div className="relative my-5 text-center">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-slate-800" />
             </div>
@@ -262,7 +360,9 @@ export const Login = () => {
               disabled={loading}
               className="w-full py-3 bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white font-semibold rounded-xl transition-all shadow-lg shadow-brand-600/20 flex items-center justify-center space-x-2"
             >
-              <span>{loading ? 'Authenticating...' : 'Sign In'}</span>
+              <span>
+                {loading ? 'Authenticating...' : `Sign In as ${activeRoleConfig.label}`}
+              </span>
               {!loading && <ArrowRight className="w-4 h-4" />}
             </button>
           </form>
@@ -298,7 +398,7 @@ export const Login = () => {
                   disabled={loading}
                   className="w-full py-3 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 disabled:opacity-50 text-slate-950 font-bold rounded-xl transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center space-x-2"
                 >
-                  <span>{loading ? 'Sending verification code...' : 'Send OTP Code'}</span>
+                  <span>{loading ? 'Sending verification code...' : `Send OTP for ${activeRoleConfig.label}`}</span>
                   {!loading && <ArrowRight className="w-4 h-4" />}
                 </button>
               </form>
@@ -350,41 +450,13 @@ export const Login = () => {
                   disabled={loading || otpCode.length < 6}
                   className="w-full py-3 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 disabled:opacity-50 text-slate-950 font-bold rounded-xl transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center space-x-2"
                 >
-                  <span>{loading ? 'Verifying...' : 'Verify & Sign In'}</span>
+                  <span>{loading ? 'Verifying...' : `Verify & Sign In as ${activeRoleConfig.label}`}</span>
                   {!loading && <ArrowRight className="w-4 h-4" />}
                 </button>
               </form>
             )}
           </div>
         )}
-
-        {/* Quick Demo Access Bar */}
-        <div className="mt-8 pt-6 border-t border-slate-800/80">
-          <p className="text-xs font-medium text-slate-400 text-center mb-3 flex items-center justify-center space-x-1">
-            <ShieldCheck className="w-4 h-4 text-brand-400" />
-            <span>Quick Demo Accounts</span>
-          </p>
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              onClick={() => handleQuickDemoLogin('trainee@capacityconnect.com')}
-              className="px-2 py-1.5 bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-medium border border-slate-700 transition-colors text-center"
-            >
-              Trainee
-            </button>
-            <button
-              onClick={() => handleQuickDemoLogin('trainer@capacityconnect.com')}
-              className="px-2 py-1.5 bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-medium border border-slate-700 transition-colors text-center"
-            >
-              Trainer
-            </button>
-            <button
-              onClick={() => handleQuickDemoLogin('admin@capacityconnect.com')}
-              className="px-2 py-1.5 bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg text-xs font-medium border border-slate-700 transition-colors text-center"
-            >
-              Admin
-            </button>
-          </div>
-        </div>
 
         <p className="mt-6 text-center text-xs text-slate-400">
           Don't have an account?{' '}
