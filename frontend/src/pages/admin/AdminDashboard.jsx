@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import adminService from '../../services/adminService';
+import certificateService from '../../services/certificateService';
 import AnalyticsChart from '../../components/admin/AnalyticsChart';
 import UserManagementTable from '../../components/admin/UserManagementTable';
 import DepartmentManagementTable from '../../components/admin/DepartmentManagementTable';
+import CertificateApprovalTable from '../../components/admin/CertificateApprovalTable';
 import Loader from '../../components/common/Loader';
-import { ShieldCheck, Users, Building, BookOpen, FileSpreadsheet, Download, Activity } from 'lucide-react';
+import { ShieldCheck, Users, Building, BookOpen, Award, Download, Activity } from 'lucide-react';
 
 export const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [analytics, setAnalytics] = useState(null);
+  const [certificates, setCertificates] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const loadAdminData = () => {
@@ -19,12 +22,14 @@ export const AdminDashboard = () => {
       adminService.getUsers(),
       adminService.getDepartments(),
       adminService.getAnalytics(),
+      certificateService.getAllCertificatesAdmin(),
     ])
-      .then(([oRes, uRes, dRes, aRes]) => {
+      .then(([oRes, uRes, dRes, aRes, cRes]) => {
         if (oRes.data) setStats(oRes.data);
         if (uRes.data) setUsers(uRes.data);
         if (dRes.data) setDepartments(dRes.data);
         if (aRes.data) setAnalytics(aRes.data);
+        if (cRes.data) setCertificates(cRes.data);
       })
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
@@ -39,12 +44,19 @@ export const AdminDashboard = () => {
     loadAdminData();
   };
 
+  const handleCertificateStatusUpdate = async (id, newStatus) => {
+    await certificateService.updateCertificateStatusAdmin(id, newStatus);
+    loadAdminData();
+  };
+
   const handleExportReport = async () => {
     const res = await adminService.exportCapacityReport();
     alert(`Capacity Report Generated Successfully: ${res.data?.reportTitle}`);
   };
 
   if (loading) return <Loader size="large" message="Loading Admin Executive Console..." />;
+
+  const pendingCertsCount = certificates.filter(c => (c.status || 'approved') === 'pending').length;
 
   return (
     <div className="space-y-6">
@@ -60,7 +72,7 @@ export const AdminDashboard = () => {
               Organizational Capacity & System Control Hub
             </h1>
             <p className="text-xs text-slate-300 mt-1">
-              Global user management, role authorization, department benchmarks, and capacity audit exports.
+              Global user management, certificate approval governance, department benchmarks, and capacity audit exports.
             </p>
           </div>
 
@@ -82,8 +94,8 @@ export const AdminDashboard = () => {
         </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-1">
-          <span className="text-xs font-medium text-slate-400 uppercase">Departments</span>
-          <p className="text-2xl font-extrabold text-purple-400">{stats?.totalDepartments || departments.length}</p>
+          <span className="text-xs font-medium text-slate-400 uppercase">Certificates Issued</span>
+          <p className="text-2xl font-extrabold text-amber-400">{certificates.length} ({pendingCertsCount} Pending)</p>
         </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-1">
@@ -96,6 +108,9 @@ export const AdminDashboard = () => {
           <p className="text-2xl font-extrabold text-red-400">{stats?.criticalGapsCount || 4} Gaps</p>
         </div>
       </div>
+
+      {/* Certificate Approval Governance Table */}
+      <CertificateApprovalTable certificates={certificates} onStatusUpdate={handleCertificateStatusUpdate} />
 
       {/* Analytics & User Management Tables */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

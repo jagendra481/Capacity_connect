@@ -6,6 +6,14 @@ class CertificateService {
     return Certificate.getByUserId(userId);
   }
 
+  async getAllCertificates() {
+    return Certificate.getAllCertificates();
+  }
+
+  async updateCertificateStatus(id, status) {
+    return Certificate.updateStatus(id, status);
+  }
+
   async verifyCertificate(hash) {
     const cert = await Certificate.findByHash(hash);
     if (!cert) {
@@ -17,7 +25,7 @@ class CertificateService {
     };
   }
 
-  async generateCertificate({ userId, courseId, assessmentId, title }) {
+  async generateCertificate({ userId, courseId, assessmentId, title, status = 'pending' }) {
     const user = await User.findById(userId);
     return Certificate.create({
       user_id: userId,
@@ -25,6 +33,7 @@ class CertificateService {
       course_id: courseId,
       assessment_id: assessmentId,
       title,
+      status: status || 'pending',
     });
   }
 }

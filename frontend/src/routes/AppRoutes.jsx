@@ -72,6 +72,7 @@ import TrainingCalendar from '../pages/calendar/TrainingCalendar';
 // Certificate Pages
 import Certificates from '../pages/certificates/Certificates';
 import CertificateVerify from '../pages/certificates/CertificateVerify';
+import CertificateVerification from '../pages/certificates/CertificateVerification';
 
 // Notification Pages
 import Notifications from '../pages/notifications/Notifications';
@@ -121,6 +122,7 @@ export const AppRoutes = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/certificates/verify/:hash" element={<CertificateVerify />} />
+      <Route path="/certificates/verify" element={<CertificateVerification />} />
 
       {/* Trainee Protected Routes */}
       <Route
