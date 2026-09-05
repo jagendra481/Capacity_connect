@@ -53,8 +53,7 @@ class User {
     const cleanEmail = String(email).trim().toLowerCase();
     const deptId = parseInt(department_id) || 1;
     
-    // Public creation restricted to trainee
-    const allowedRoles = ['trainee', 'trainer'];
+    const allowedRoles = ['trainee', 'trainer', 'administrator'];
     const cleanRole = allowedRoles.includes(role) ? role : 'trainee';
     const avatarUrl = profile_image || ('https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(full_name || 'User'));
 

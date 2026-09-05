@@ -54,8 +54,8 @@ export const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Selected Role Option: 'trainee' | 'trainer' | 'administrator'
-  const [selectedRole, setSelectedRole] = useState('trainee');
+  // Selected Role Option: 'trainee' | 'trainer' | 'administrator' | null
+  const [selectedRole, setSelectedRole] = useState(null);
 
   // Auth Mode: 'password' | 'otp'
   const [loginMode, setLoginMode] = useState('password');
@@ -73,33 +73,35 @@ export const Login = () => {
   const [accountNotFound, setAccountNotFound] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const activeRoleConfig = ROLE_OPTIONS.find((r) => r.id === selectedRole) || ROLE_OPTIONS[0];
+  const activeRoleConfig = ROLE_OPTIONS.find((r) => r.id === selectedRole);
 
   const determineDestination = (userRole) => {
     if (location.state?.from?.pathname) {
       return location.state.from.pathname;
     }
 
-    // Administrators have multi-portal clearance
     if (userRole === ROLES.ADMINISTRATOR) {
       if (selectedRole === 'trainer') return '/trainer/dashboard';
       if (selectedRole === 'trainee') return '/trainee/dashboard';
       return '/admin/dashboard';
     }
 
-    // Direct other roles to their authorized dashboard
     return getDashboardRoute(userRole);
   };
 
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
+    if (!selectedRole) {
+      setError('Please select your role (Trainee, Trainer, or Administrator) before signing in.');
+      return;
+    }
     setError('');
     setAccountNotFound(false);
     setLoading(true);
 
     try {
-      const res = await login({ email, password });
-      const userRole = res.data?.user?.role || 'trainee';
+      const res = await login({ email, password, selectedRole });
+      const userRole = res.data?.user?.role || selectedRole;
       const destination = determineDestination(userRole);
       navigate(destination, { replace: true });
     } catch (err) {
@@ -115,7 +117,7 @@ export const Login = () => {
           },
         });
       } else {
-        setError(err?.message || err || 'Invalid email or password.');
+        setError(err?.response?.data?.message || err?.message || err || 'Invalid email or password.');
       }
     } finally {
       setLoading(false);
@@ -124,6 +126,10 @@ export const Login = () => {
 
   const handleSendOTP = async (e) => {
     e.preventDefault();
+    if (!selectedRole) {
+      setError('Please select your role before requesting an OTP code.');
+      return;
+    }
     setError('');
     setAccountNotFound(false);
     setOtpSentMessage('');
@@ -131,7 +137,7 @@ export const Login = () => {
     setLoading(true);
 
     try {
-      const res = await sendOTP(email);
+      const res = await sendOTP(email, selectedRole);
       setOtpSentMessage(res.data?.message || `6-digit OTP code sent to ${email}`);
       setOtpStep('enter_otp');
     } catch (err) {
@@ -139,7 +145,7 @@ export const Login = () => {
         setAccountNotFound(true);
         setError('Account not found. Please sign up first.');
       } else {
-        setError(err?.message || err || 'Failed to send OTP code. Please check your email.');
+        setError(err?.response?.data?.message || err?.message || err || 'Failed to send OTP code.');
       }
     } finally {
       setLoading(false);
@@ -148,28 +154,36 @@ export const Login = () => {
 
   const handleVerifyOTP = async (e) => {
     e.preventDefault();
+    if (!selectedRole) {
+      setError('Please select your role before verifying OTP code.');
+      return;
+    }
     setError('');
     setLoading(true);
 
     try {
-      const res = await verifyOTP(email, otpCode);
-      const userRole = res.data?.user?.role || 'trainee';
+      const res = await verifyOTP(email, otpCode, selectedRole);
+      const userRole = res.data?.user?.role || selectedRole;
       const destination = determineDestination(userRole);
       navigate(destination, { replace: true });
     } catch (err) {
-      setError(err?.message || err || 'Invalid verification code. Please try again.');
+      setError(err?.response?.data?.message || err?.message || err || 'Invalid verification code.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoogleSuccess = async (googlePayload) => {
+    if (!selectedRole) {
+      setError('Please select your role (Trainee, Trainer, or Administrator) before continuing with Google.');
+      return;
+    }
     setError('');
     setAccountNotFound(false);
     setLoading(true);
     try {
-      const res = await loginWithGoogle(googlePayload);
-      const userRole = res.data?.user?.role || 'trainee';
+      const res = await loginWithGoogle(googlePayload, selectedRole);
+      const userRole = res.data?.user?.role || selectedRole;
       const destination = determineDestination(userRole);
       navigate(destination, { replace: true });
     } catch (err) {
@@ -177,7 +191,7 @@ export const Login = () => {
         setAccountNotFound(true);
         setError('No Capacity Connect account was found for this Google account. Please sign up first.');
       } else {
-        setError(err?.message || err || 'Google login failed');
+        setError(err?.response?.data?.message || err?.message || err || 'Google login failed');
       }
     } finally {
       setLoading(false);
@@ -201,7 +215,7 @@ export const Login = () => {
         {/* 3 Role-Based Sign-In Selection Options */}
         <div className="mb-5">
           <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 text-center">
-            Select Your Role
+            Select Your Role <span className="text-amber-400">*</span>
           </label>
           <div className="grid grid-cols-3 gap-2">
             {ROLE_OPTIONS.map((role) => {
@@ -234,13 +248,21 @@ export const Login = () => {
           </div>
 
           {/* Role Context Hint */}
-          <div className="mt-2.5 p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-start space-x-2">
-            <Sparkles className="w-3.5 h-3.5 text-brand-400 flex-shrink-0 mt-0.5" />
-            <p className="text-[11px] text-slate-300 leading-snug">
-              <span className="font-semibold text-slate-200">{activeRoleConfig.label} Workspace:</span>{' '}
-              {activeRoleConfig.description}
-            </p>
-          </div>
+          {activeRoleConfig ? (
+            <div className="mt-2.5 p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-start space-x-2">
+              <Sparkles className="w-3.5 h-3.5 text-brand-400 flex-shrink-0 mt-0.5" />
+              <p className="text-[11px] text-slate-300 leading-snug">
+                <span className="font-semibold text-slate-200">{activeRoleConfig.label} Workspace:</span>{' '}
+                {activeRoleConfig.description}
+              </p>
+            </div>
+          ) : (
+            <div className="mt-2.5 p-2.5 rounded-xl bg-slate-950/40 border border-dashed border-slate-800 text-center">
+              <p className="text-[11px] text-cyan-400/90 font-medium">
+                Mandatory: Click Trainee, Trainer, or Admin to select your role.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Error / Feedback Message */}
@@ -357,11 +379,15 @@ export const Login = () => {
 
             <button
               type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white font-semibold rounded-xl transition-all shadow-lg shadow-brand-600/20 flex items-center justify-center space-x-2"
+              disabled={loading || !selectedRole}
+              className="w-full py-3 bg-brand-600 hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all shadow-lg shadow-brand-600/20 flex items-center justify-center space-x-2"
             >
               <span>
-                {loading ? 'Authenticating...' : `Sign In as ${activeRoleConfig.label}`}
+                {!selectedRole
+                  ? 'Select a Role to Sign In'
+                  : loading
+                  ? 'Authenticating...'
+                  : `Sign In as ${activeRoleConfig?.label}`}
               </span>
               {!loading && <ArrowRight className="w-4 h-4" />}
             </button>
@@ -395,10 +421,16 @@ export const Login = () => {
 
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="w-full py-3 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 disabled:opacity-50 text-slate-950 font-bold rounded-xl transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center space-x-2"
+                  disabled={loading || !selectedRole}
+                  className="w-full py-3 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-bold rounded-xl transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center space-x-2"
                 >
-                  <span>{loading ? 'Sending verification code...' : `Send OTP for ${activeRoleConfig.label}`}</span>
+                  <span>
+                    {!selectedRole
+                      ? 'Select a Role to Send OTP'
+                      : loading
+                      ? 'Sending verification code...'
+                      : `Send OTP for ${activeRoleConfig?.label}`}
+                  </span>
                   {!loading && <ArrowRight className="w-4 h-4" />}
                 </button>
               </form>
@@ -447,10 +479,16 @@ export const Login = () => {
 
                 <button
                   type="submit"
-                  disabled={loading || otpCode.length < 6}
-                  className="w-full py-3 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 disabled:opacity-50 text-slate-950 font-bold rounded-xl transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center space-x-2"
+                  disabled={loading || otpCode.length < 6 || !selectedRole}
+                  className="w-full py-3 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-bold rounded-xl transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center space-x-2"
                 >
-                  <span>{loading ? 'Verifying...' : `Verify & Sign In as ${activeRoleConfig.label}`}</span>
+                  <span>
+                    {!selectedRole
+                      ? 'Select a Role to Verify'
+                      : loading
+                      ? 'Verifying...'
+                      : `Verify & Sign In as ${activeRoleConfig?.label}`}
+                  </span>
                   {!loading && <ArrowRight className="w-4 h-4" />}
                 </button>
               </form>

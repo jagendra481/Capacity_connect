@@ -31,12 +31,12 @@ export const authService = {
     return res;
   },
 
-  sendOTP: async (email) => {
-    return api.post('/auth/send-otp', { email });
+  sendOTP: async (email, selectedRole) => {
+    return api.post('/auth/send-otp', { email, selectedRole });
   },
 
-  verifyOTP: async (email, otp) => {
-    const res = await api.post('/auth/verify-otp', { email, otp });
+  verifyOTP: async (email, otp, selectedRole) => {
+    const res = await api.post('/auth/verify-otp', { email, otp, selectedRole });
     if (res.data?.token) {
       localStorage.setItem('capacity_connect_token', res.data.token);
       localStorage.setItem('capacity_connect_user', JSON.stringify(res.data.user));
