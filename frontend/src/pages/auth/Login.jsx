@@ -54,8 +54,8 @@ export const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Selected Role Option: 'trainee' | 'trainer' | 'administrator' | null
-  const [selectedRole, setSelectedRole] = useState(null);
+  // Selected Role Option: 'trainee' | 'trainer' | 'administrator'
+  const [selectedRole, setSelectedRole] = useState('trainee');
 
   // Auth Mode: 'password' | 'otp'
   const [loginMode, setLoginMode] = useState('password');
@@ -379,15 +379,13 @@ export const Login = () => {
 
             <button
               type="submit"
-              disabled={loading || !selectedRole}
+              disabled={loading}
               className="w-full py-3 bg-brand-600 hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all shadow-lg shadow-brand-600/20 flex items-center justify-center space-x-2"
             >
               <span>
-                {!selectedRole
-                  ? 'Select a Role to Sign In'
-                  : loading
+                {loading
                   ? 'Authenticating...'
-                  : `Sign In as ${activeRoleConfig?.label}`}
+                  : `Sign In as ${activeRoleConfig?.label || 'Trainee'}`}
               </span>
               {!loading && <ArrowRight className="w-4 h-4" />}
             </button>
@@ -421,15 +419,13 @@ export const Login = () => {
 
                 <button
                   type="submit"
-                  disabled={loading || !selectedRole}
+                  disabled={loading}
                   className="w-full py-3 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-bold rounded-xl transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center space-x-2"
                 >
                   <span>
-                    {!selectedRole
-                      ? 'Select a Role to Send OTP'
-                      : loading
+                    {loading
                       ? 'Sending verification code...'
-                      : `Send OTP for ${activeRoleConfig?.label}`}
+                      : `Send OTP for ${activeRoleConfig?.label || 'Trainee'}`}
                   </span>
                   {!loading && <ArrowRight className="w-4 h-4" />}
                 </button>
@@ -479,15 +475,13 @@ export const Login = () => {
 
                 <button
                   type="submit"
-                  disabled={loading || otpCode.length < 6 || !selectedRole}
+                  disabled={loading || otpCode.length < 6}
                   className="w-full py-3 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-bold rounded-xl transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center space-x-2"
                 >
                   <span>
-                    {!selectedRole
-                      ? 'Select a Role to Verify'
-                      : loading
+                    {loading
                       ? 'Verifying...'
-                      : `Verify & Sign In as ${activeRoleConfig?.label}`}
+                      : `Verify & Sign In as ${activeRoleConfig?.label || 'Trainee'}`}
                   </span>
                   {!loading && <ArrowRight className="w-4 h-4" />}
                 </button>

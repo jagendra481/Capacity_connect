@@ -76,9 +76,9 @@ export const LandingFooter = () => {
       </div>
 
       {/* Bottom Sub-footer */}
-      <div className="max-w-7xl mx-auto pt-8 mt-10 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
-        <p>© 2026 Capacity Connect. All rights reserved.</p>
-        <p className="font-mono text-[11px] text-slate-600">Digital Capacity Building & Learning Management Portal</p>
+      <div className="max-w-7xl mx-auto pt-8 mt-10 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-4">
+        <p>© 2026 CAPACITY CONNECT. Ministry of Earth Sciences (MoES) • India Meteorological Department (IMD).</p>
+        <p className="font-mono text-[11px] text-cyan-400">Smart Education • Problem Statement ID: 26075</p>
       </div>
     </footer>
   );

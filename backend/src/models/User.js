@@ -53,7 +53,7 @@ class User {
     const cleanEmail = String(email).trim().toLowerCase();
     const deptId = parseInt(department_id) || 1;
     
-    const allowedRoles = ['trainee', 'trainer', 'administrator'];
+    const allowedRoles = ['trainee', 'trainer', 'administrator', 'super_admin'];
     const cleanRole = allowedRoles.includes(role) ? role : 'trainee';
     const avatarUrl = profile_image || ('https://api.dicebear.com/7.x/avataaars/svg?seed=' + encodeURIComponent(full_name || 'User'));
 
@@ -104,6 +104,8 @@ class User {
       streak_days: 0,
       competency_score: 0,
     });
+
+    if (db.saveMemoryStore) db.saveMemoryStore();
 
     const { password_hash: _, ...userWithoutPassword } = newUser;
     return userWithoutPassword;
@@ -173,6 +175,8 @@ class User {
       streak_days: 0,
       competency_score: 0,
     });
+
+    if (db.saveMemoryStore) db.saveMemoryStore();
 
     const { password_hash: _, ...userWithoutPassword } = newUser;
     return userWithoutPassword;
@@ -277,6 +281,7 @@ class User {
     if (user) {
       user.status = status;
       if (reason) user.suspension_reason = reason;
+      if (db.saveMemoryStore) db.saveMemoryStore();
       const { password_hash, ...safe } = user;
       return safe;
     }
@@ -296,6 +301,7 @@ class User {
     const user = db.memoryStore.users.find(u => u.id === numericId);
     if (user) {
       user.role = role;
+      if (db.saveMemoryStore) db.saveMemoryStore();
       const { password_hash, ...safe } = user;
       return safe;
     }
@@ -311,6 +317,7 @@ class User {
     const user = db.memoryStore.users.find(u => u.id === numericId);
     if (user) {
       user.password_hash = password_hash;
+      if (db.saveMemoryStore) db.saveMemoryStore();
       return true;
     }
     return false;

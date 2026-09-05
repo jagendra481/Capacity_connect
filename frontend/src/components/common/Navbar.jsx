@@ -31,6 +31,9 @@ export const Navbar = ({ onToggleSidebar }) => {
             <span className="font-bold text-lg md:text-xl tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
               CAPACITY CONNECT
             </span>
+            <span className="hidden sm:inline-flex items-center px-2 py-0.5 text-[10px] font-bold text-cyan-300 bg-cyan-500/10 border border-cyan-500/30 rounded-full">
+              MoES • IMD | PS: 26075
+            </span>
           </Link>
         </div>
 

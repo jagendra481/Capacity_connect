@@ -39,22 +39,22 @@ export const HeroSection = () => {
           <div className="lg:col-span-7 space-y-7 text-left">
             
             {/* Category Tag */}
-            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-md bg-slate-900 border border-slate-800 text-xs font-medium text-slate-300">
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-              <span>Digital Capacity Building Platform</span>
+            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-md bg-slate-900 border border-cyan-500/30 text-xs font-medium text-cyan-300">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+              <span>Ministry of Earth Sciences (MoES) • IMD | SIH PS ID: 26075</span>
             </div>
 
             {/* Main Heading */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-100 tracking-tight leading-[1.12]">
               Assess. Learn. Improve.{' '}
               <span className="block mt-2 font-black text-white">
-                Build Organizational <span className="text-cyan-400">Capacity</span>.
+                Build Digital <span className="text-cyan-400">Capacity</span>.
               </span>
             </h1>
 
             {/* Concise Description */}
             <p className="text-base sm:text-lg text-slate-300 max-w-xl font-normal leading-relaxed">
-              Capacity Connect helps organizations identify skill gaps, deliver personalized learning, and build a future-ready workforce through real-time competency analytics.
+              Centralized web portal for organizational training, competency mapping, subject-wise MCQ assessments, trainer libraries, and verifiable certificates.
             </p>
 
             {/* CTAs */}

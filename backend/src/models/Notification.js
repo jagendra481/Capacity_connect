@@ -89,6 +89,37 @@ class Notification {
     demoNotifications.unshift(newNotif);
     return newNotif;
   }
+
+  static async createAnnouncement({ title, message, type = 'Announcement', link = '' }) {
+      const res = await db.query(
+        `INSERT INTO notifications (user_id, title, message, type, link)
+         VALUES (0, $1, $2, $3, $4) RETURNING *`,
+        [title, message, type, link]
+      );
+      return res.rows[0];
+    }
+
+    const newAnnouncement = {
+      id: demoNotifications.length + 100,
+      user_id: 0,
+      title,
+      message,
+      type,
+      read: false,
+      link: link || '/',
+      created_at: new Date().toISOString(),
+    };
+    demoNotifications.unshift(newAnnouncement);
+    return newAnnouncement;
+  }
+
+  static async getPublicAnnouncements() {
+    if (db.getIsPgConnected()) {
+      const res = await db.query('SELECT * FROM notifications WHERE user_id = 0 ORDER BY created_at DESC');
+      return res.rows;
+    }
+    return demoNotifications.filter(n => n.user_id === 0 || n.type === 'Announcement' || n.type === 'Achievement');
+  }
 }
 
 module.exports = Notification;

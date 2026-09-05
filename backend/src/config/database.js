@@ -2,9 +2,13 @@ const { Pool } = require('pg');
 const env = require('./env');
 const logger = require('../utils/logger');
 const bcrypt = require('bcryptjs');
+const fs = require('fs');
+const path = require('path');
 
 let pool = null;
 let isPgConnected = false;
+
+const MEMORY_BACKUP_PATH = path.join(__dirname, 'memory_backup.json');
 
 // In-memory data store as resilient fallback if PostgreSQL is offline
 const memoryStore = {
@@ -56,10 +60,54 @@ const memoryStore = {
   aiMessages: []
 };
 
+// Persistence helper for in-memory store
+const saveMemoryStore = () => {
+  try {
+    const dataToSave = {
+      users: memoryStore.users,
+      userProfiles: memoryStore.userProfiles,
+      courses: memoryStore.courses,
+      certificates: memoryStore.certificates,
+      adminActivityLogs: memoryStore.adminActivityLogs,
+      announcements: memoryStore.announcements,
+      learningResources: memoryStore.learningResources,
+    };
+    fs.writeFileSync(MEMORY_BACKUP_PATH, JSON.stringify(dataToSave, null, 2), 'utf8');
+  } catch (err) {
+    logger.warn(`Failed to persist memoryStore backup: ${err.message}`);
+  }
+};
+
+const loadMemoryStoreFromFile = () => {
+  try {
+    if (fs.existsSync(MEMORY_BACKUP_PATH)) {
+      const raw = fs.readFileSync(MEMORY_BACKUP_PATH, 'utf8');
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed.users) && parsed.users.length > 0) {
+        memoryStore.users = parsed.users;
+      }
+      if (Array.isArray(parsed.userProfiles) && parsed.userProfiles.length > 0) {
+        memoryStore.userProfiles = parsed.userProfiles;
+      }
+      return true;
+    }
+  } catch (err) {
+    logger.warn(`Failed to read memoryStore backup: ${err.message}`);
+  }
+  return false;
+};
+
 // Seed initial memory store demo data
 const initializeMemoryStore = async () => {
+  const loaded = loadMemoryStoreFromFile();
+  if (loaded && memoryStore.users.length > 0) {
+    logger.info(`[MEMORY STORE] Loaded ${memoryStore.users.length} persisted users from disk.`);
+    return;
+  }
+
   const salt = await bcrypt.genSalt(10);
   const passwordHash = await bcrypt.hash('Password123!', salt);
+  const adminPasswordHash = await bcrypt.hash('admin123', salt);
 
   memoryStore.users = [
     {
@@ -100,6 +148,18 @@ const initializeMemoryStore = async () => {
     },
     {
       id: 4,
+      email: 'capacityadmin@gmail.com',
+      password_hash: adminPasswordHash,
+      role: 'administrator',
+      department_id: 5,
+      full_name: 'Capacity Administrator',
+      email_verified: true,
+      status: 'active',
+      created_at: new Date(Date.now() - 10 * 86400000).toISOString(),
+      last_login_at: new Date().toISOString()
+    },
+    {
+      id: 5,
       email: 'priya.sharma@moes.gov.in',
       password_hash: passwordHash,
       role: 'trainee',
@@ -111,7 +171,7 @@ const initializeMemoryStore = async () => {
       last_login_at: new Date(Date.now() - 1 * 86400000).toISOString()
     },
     {
-      id: 5,
+      id: 6,
       email: 'rahul.verma@incois.gov.in',
       password_hash: passwordHash,
       role: 'trainee',
@@ -123,7 +183,7 @@ const initializeMemoryStore = async () => {
       last_login_at: null
     },
     {
-      id: 6,
+      id: 7,
       email: 'anand.roy@iitd.ac.in',
       password_hash: passwordHash,
       role: 'trainer',
@@ -135,7 +195,7 @@ const initializeMemoryStore = async () => {
       last_login_at: new Date(Date.now() - 4 * 86400000).toISOString()
     },
     {
-      id: 7,
+      id: 8,
       email: 'neha.gupta@moes.gov.in',
       password_hash: passwordHash,
       role: 'trainee',
@@ -148,7 +208,7 @@ const initializeMemoryStore = async () => {
       last_login_at: new Date(Date.now() - 10 * 86400000).toISOString()
     },
     {
-      id: 8,
+      id: 9,
       email: 'superadmin@capacityconnect.com',
       password_hash: passwordHash,
       role: 'super_admin',
@@ -206,6 +266,20 @@ const initializeMemoryStore = async () => {
     },
     {
       user_id: 4,
+      designation: 'Central Systems Administrator',
+      phone: '+91 98000 11223',
+      organization: 'Ministry of Earth Sciences (MoES / IMD)',
+      qualifications: 'B.Tech IT & Security Administration',
+      experience: '8 Years Database & Platform Governance',
+      skills: ['System Administration', 'Database Management', 'Access Control'],
+      bio: 'Administrator account for platform management and capacity audits.',
+      avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=250',
+      xp: 5000,
+      streak_days: 30,
+      competency_score: 100
+    },
+    {
+      user_id: 5,
       designation: 'Senior Remote Sensing Scientist',
       phone: '+91 98444 55667',
       organization: 'National Remote Sensing Centre (NRSC)',
@@ -217,62 +291,6 @@ const initializeMemoryStore = async () => {
       xp: 1800,
       streak_days: 14,
       competency_score: 89
-    },
-    {
-      user_id: 5,
-      designation: 'Junior Ocean Modeler (Trainee)',
-      phone: '+91 98555 66778',
-      organization: 'Indian National Centre for Ocean Information Services',
-      qualifications: 'B.Tech Environmental Engineering',
-      experience: '1 Year Research Fellow',
-      skills: ['Python', 'Basic Oceanography'],
-      bio: 'Newly registered candidate awaiting administrative onboarding review.',
-      avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=250',
-      xp: 200,
-      streak_days: 2,
-      competency_score: 65
-    },
-    {
-      user_id: 6,
-      designation: 'Professor & AI in Climate Lead',
-      phone: '+91 98666 77889',
-      organization: 'Indian Institute of Technology Delhi',
-      qualifications: 'Ph.D AI & High Performance Computing',
-      experience: '18 Years Academic & Applied AI Research',
-      skills: ['Machine Learning', 'RAG Architectures', 'Vector Search', 'HPC'],
-      bio: 'Visiting expert conducting advanced AI modules for earth science professionals.',
-      avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=250',
-      xp: 4200,
-      streak_days: 30,
-      competency_score: 97
-    },
-    {
-      user_id: 7,
-      designation: 'Polar Researcher',
-      phone: '+91 98777 88990',
-      organization: 'National Centre for Polar and Ocean Research',
-      qualifications: 'M.Sc Glaciology',
-      experience: '5 Years Antarctic Expeditions',
-      skills: ['Cryosphere Studies', 'Climate Trends'],
-      bio: 'Member of Antarctica research mission currently undergoing credential update.',
-      avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=250',
-      xp: 1100,
-      streak_days: 0,
-      competency_score: 80
-    },
-    {
-      user_id: 8,
-      designation: 'Super Administrator & Director of Systems',
-      phone: '+91 98888 99001',
-      organization: 'Ministry of Earth Sciences Executive Council',
-      qualifications: 'Executive Director of Technology',
-      experience: '20+ Years Strategic Management',
-      skills: ['System Security', 'RBAC Governance', 'Root Authority'],
-      bio: 'Root system administrator holding top-level security clearances.',
-      avatar_url: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=250',
-      xp: 10000,
-      streak_days: 100,
-      competency_score: 100
     }
   ];
 
@@ -280,253 +298,128 @@ const initializeMemoryStore = async () => {
     {
       id: 101,
       title: 'Modern React Architecture & Performance',
-      description: 'Build production-ready React applications with component design, hooks, routing, state patterns, performance tuning, and deployment practices.',
-      category: 'Engineering',
-      level: 'Advanced',
-      duration: '12h 00m',
+      description: 'Master component decoupling, micro-frontends, custom hooks, and rendering optimization.',
+      category: 'Engineering & Ocean Tech',
+      level: 'intermediate',
+      duration_hours: 40,
+      max_enrollment: 100,
       trainer_id: 2,
-      trainer_name: 'Dr. Sarah Connor',
-      status: 'published',
-      enrolledCount: 18,
-      completionRate: 85,
-      avgScore: 92,
+      is_published: true,
+      created_at: new Date(Date.now() - 90 * 86400000).toISOString(),
     },
     {
       id: 102,
       title: 'Node.js, Express & API Engineering',
-      description: 'Develop secure backend services with Node.js, Express, REST APIs, routing, middleware, data persistence, and an MVC structure.',
-      category: 'Engineering',
-      level: 'Intermediate',
-      duration: '10h 30m',
+      description: 'Backend architectural design, secure RESTful APIs, rate-limiting, and middleware.',
+      category: 'Engineering & Ocean Tech',
+      level: 'intermediate',
+      duration_hours: 45,
+      max_enrollment: 80,
       trainer_id: 2,
-      trainer_name: 'Dr. Sarah Connor',
-      status: 'published',
-      enrolledCount: 14,
-      completionRate: 78,
-      avgScore: 88,
+      is_published: true,
+      created_at: new Date(Date.now() - 80 * 86400000).toISOString(),
     },
     {
       id: 103,
-      title: 'PostgreSQL Querying & Database Performance',
-      description: 'Design reliable relational databases, write expressive SQL, understand joins and transactions, and apply indexing and query-performance techniques.',
-      category: 'Database',
-      level: 'Intermediate',
-      duration: '8h 00m',
-      trainer_id: 2,
-      trainer_name: 'Dr. Sarah Connor',
-      status: 'published',
-      enrolledCount: 12,
-      completionRate: 90,
-      avgScore: 94,
+      title: 'Satellite Remote Sensing & GIS Analysis',
+      description: 'Satellite altimetry, hyperspectral data decoding, and coastal vulnerability mapping.',
+      category: 'Satellite Remote Sensing',
+      level: 'advanced',
+      duration_hours: 60,
+      max_enrollment: 60,
+      trainer_id: 7,
+      is_published: true,
+      created_at: new Date(Date.now() - 70 * 86400000).toISOString(),
     },
     {
       id: 104,
-      title: 'Production RAG Systems & Vector Search',
-      description: 'Create grounded AI applications with document indexing, embeddings, vector retrieval, prompt construction, evaluation, and advanced RAG patterns.',
-      category: 'AI',
-      level: 'Advanced',
-      duration: '9h 00m',
-      trainer_id: 6,
-      trainer_name: 'Prof. Anand Roy',
-      status: 'published',
-      enrolledCount: 9,
-      completionRate: 70,
-      avgScore: 86,
+      title: 'Ocean Data Modeling & Machine Learning',
+      description: 'Predictive neural networks for cyclone forecasting, sea surface temperatures, and wave height.',
+      category: 'AI & Machine Learning',
+      level: 'advanced',
+      duration_hours: 50,
+      max_enrollment: 50,
+      trainer_id: 7,
+      is_published: true,
+      created_at: new Date(Date.now() - 60 * 86400000).toISOString(),
     },
     {
       id: 105,
-      title: 'Python Foundations for Automation & Data',
-      description: 'Gain a practical Python foundation covering core syntax, data structures, functions, modules, virtual environments, and automation workflows.',
-      category: 'Programming',
-      level: 'Beginner',
-      duration: '15h 00m',
+      title: 'Radar Meteorology & Precipitation Dynamics',
+      description: 'Doppler radar calibration, signal processing, and severe weather warning systems.',
+      category: 'Radar Meteorology',
+      level: 'intermediate',
+      duration_hours: 35,
+      max_enrollment: 70,
       trainer_id: 2,
-      trainer_name: 'Dr. Sarah Connor',
-      status: 'published',
-      enrolledCount: 22,
-      completionRate: 95,
-      avgScore: 91,
+      is_published: true,
+      created_at: new Date(Date.now() - 50 * 86400000).toISOString(),
+    },
+    {
+      id: 106,
+      title: 'Computational Fluid Dynamics for Ocean Currents',
+      description: 'Hydrodynamic simulation pipelines, Navier-Stokes solvers, and bathymetric grids.',
+      category: 'Computational Fluid Dynamics',
+      level: 'advanced',
+      duration_hours: 65,
+      max_enrollment: 40,
+      trainer_id: 7,
+      is_published: true,
+      created_at: new Date(Date.now() - 40 * 86400000).toISOString(),
+    },
+    {
+      id: 107,
+      title: 'Polar Ice Cap Cryosphere Modeling',
+      description: 'Satellite radar interferometry analysis of Arctic and Antarctic glacial movement.',
+      category: 'Satellite Remote Sensing',
+      level: 'advanced',
+      duration_hours: 55,
+      max_enrollment: 45,
+      trainer_id: 7,
+      is_published: true,
+      created_at: new Date(Date.now() - 30 * 86400000).toISOString(),
     }
   ];
 
   memoryStore.courseProgress = [
-    { id: 1, user_id: 1, course_id: 101, lesson_id: 10101, completed: true, progress_percentage: 100, last_accessed: new Date(Date.now() - 7 * 86400000).toISOString() },
-    { id: 2, user_id: 1, course_id: 101, lesson_id: 10102, completed: true, progress_percentage: 100, last_accessed: new Date(Date.now() - 7 * 86400000).toISOString() },
-    { id: 3, user_id: 1, course_id: 101, lesson_id: 10111, completed: true, progress_percentage: 100, last_accessed: new Date(Date.now() - 7 * 86400000).toISOString() },
-    { id: 4, user_id: 1, course_id: 101, lesson_id: 10112, completed: true, progress_percentage: 100, last_accessed: new Date(Date.now() - 7 * 86400000).toISOString() },
-    { id: 5, user_id: 1, course_id: 101, lesson_id: 10121, completed: true, progress_percentage: 100, last_accessed: new Date(Date.now() - 7 * 86400000).toISOString() },
-    { id: 6, user_id: 1, course_id: 101, lesson_id: 10122, completed: true, progress_percentage: 100, last_accessed: new Date(Date.now() - 7 * 86400000).toISOString() },
-    { id: 7, user_id: 1, course_id: 101, lesson_id: 10131, completed: true, progress_percentage: 100, last_accessed: new Date(Date.now() - 7 * 86400000).toISOString() },
-    { id: 8, user_id: 1, course_id: 101, lesson_id: 10132, completed: true, progress_percentage: 100, last_accessed: new Date(Date.now() - 7 * 86400000).toISOString() },
-    { id: 9, user_id: 4, course_id: 101, lesson_id: 10101, completed: true, progress_percentage: 75, last_accessed: new Date(Date.now() - 3 * 86400000).toISOString() },
-    { id: 10, user_id: 4, course_id: 101, lesson_id: 10102, completed: true, progress_percentage: 75, last_accessed: new Date(Date.now() - 3 * 86400000).toISOString() },
+    { id: 1, user_id: 1, course_id: 101, progress_percentage: 100, status: 'completed', completed: true, last_accessed: new Date(Date.now() - 7 * 86400000).toISOString() },
+    { id: 2, user_id: 1, course_id: 102, progress_percentage: 100, status: 'completed', completed: true, last_accessed: new Date(Date.now() - 2 * 86400000).toISOString() },
+    { id: 3, user_id: 5, course_id: 103, progress_percentage: 85, status: 'in_progress', completed: false, last_accessed: new Date(Date.now() - 1 * 86400000).toISOString() },
+    { id: 4, user_id: 6, course_id: 101, progress_percentage: 40, status: 'in_progress', completed: false, last_accessed: new Date(Date.now() - 3 * 86400000).toISOString() },
+  ];
+
+  memoryStore.assessments = [
+    { id: 1, course_id: 101, title: 'Modern React Architecture & Component Mastery Exam', passing_score: 70, time_limit_minutes: 45, max_attempts: 3, is_published: true, total_attempts: 32, avg_score: 86.5 },
+    { id: 2, course_id: 102, title: 'Node.js, Express & Microservices Certification Exam', passing_score: 75, time_limit_minutes: 60, max_attempts: 3, is_published: true, total_attempts: 21, avg_score: 82.0 },
+    { id: 3, course_id: 103, title: 'Satellite Remote Sensing & Altimetry Qualification Test', passing_score: 75, time_limit_minutes: 60, max_attempts: 3, is_published: true, total_attempts: 14, avg_score: 88.0 },
+    { id: 4, course_id: 104, title: 'Ocean Data Modeling & Machine Learning Core Exam', passing_score: 80, time_limit_minutes: 50, max_attempts: 2, is_published: true, total_attempts: 18, avg_score: 79.5 },
+  ];
+
+  memoryStore.questions = [
+    { id: 1, assessment_id: 1, question_text: 'What hook is utilized to optimize performance by memoizing computed values?', options: ['useMemo', 'useCallback', 'useRef', 'useEffect'], correct_option: 0, explanation: 'useMemo returns a memoized value recalculating only when dependencies change.', points: 1 },
+    { id: 2, assessment_id: 1, question_text: 'Which React 18 feature allows non-urgent state updates to be deferred?', options: ['useTransition', 'useSyncExternalStore', 'useId', 'useImperativeHandle'], correct_option: 0, explanation: 'useTransition marks state updates as transitions allowing urgent inputs to interrupt.', points: 1 },
+    { id: 3, assessment_id: 2, question_text: 'Which HTTP status code signifies that a resource was successfully created?', options: ['200 OK', '201 Created', '204 No Content', '304 Not Modified'], correct_option: 1, explanation: '201 Created indicates the request succeeded and led to resource creation.', points: 1 },
   ];
 
   memoryStore.learningResources = [
-    {
-      id: 1,
-      title: 'Advanced React 18 Patterns & Component Lifecycle Architecture',
-      description: 'Comprehensive video lecture on decoupling business state, memory leak prevention, and server-side hydration.',
-      resource_type: 'lecture_video',
-      file_url: 'https://www.youtube.com/watch?v=bMknfKXIFA8',
-      course_id: 101,
-      trainer_id: 2,
-      duration_minutes: 48,
-      status: 'active',
-      created_at: new Date(Date.now() - 10 * 86400000).toISOString(),
-    },
-    {
-      id: 2,
-      title: 'Full-Stack Architecture & Microservices Implementation Blueprint (PPTX)',
-      description: 'Official Ministry slides explaining domain-driven design, event brokers (Kafka/RabbitMQ), and API security.',
-      resource_type: 'presentation',
-      file_url: '/materials/microservices-architecture-blueprint.pptx',
-      course_id: 101,
-      trainer_id: 2,
-      file_size_bytes: 4820000,
-      status: 'active',
-      created_at: new Date(Date.now() - 8 * 86400000).toISOString(),
-    },
-    {
-      id: 3,
-      title: 'Enterprise PostgreSQL Indexing & EXPLAIN ANALYZE Handbook',
-      description: 'Technical reference manual covering B-Tree, GIN indexes, transaction isolation levels, and vacuuming strategies.',
-      resource_type: 'pdf_document',
-      file_url: '/materials/postgresql-performance-tuning-guide.pdf',
-      course_id: 103,
-      trainer_id: 2,
-      file_size_bytes: 2450000,
-      status: 'active',
-      created_at: new Date(Date.now() - 6 * 86400000).toISOString(),
-    },
-    {
-      id: 4,
-      title: 'Production RAG Vector Search & Chunking Strategy Manual',
-      description: 'Practical guide to high-density vector retrieval, hybrid BM25 search, and hallucination reduction benchmarks.',
-      resource_type: 'study_guide',
-      file_url: '/materials/production-rag-handbook.pdf',
-      course_id: 104,
-      trainer_id: 6,
-      file_size_bytes: 3100000,
-      status: 'active',
-      created_at: new Date(Date.now() - 4 * 86400000).toISOString(),
-    }
+    { id: 1, title: 'Advanced React 18 Patterns & Component Lifecycle Architecture', description: 'Comprehensive design system guide for high performance web portals.', resource_type: 'presentation', course_id: 101, file_url: 'https://cloud-storage.moes.gov.in/resources/react_patterns_2026.pptx', duration_or_pages: '45 Slides', tags: ['React', 'Architecture'], created_by: 2 },
+    { id: 2, title: 'Node.js Microservices Security & Cryptographic Handshake Guide', description: 'Technical whitepaper on HMAC and SHA-256 integrity checks in API pipelines.', resource_type: 'pdf', course_id: 102, file_url: 'https://cloud-storage.moes.gov.in/resources/nodejs_crypto_guide.pdf', duration_or_pages: '88 Pages', tags: ['Backend', 'Security'], created_by: 2 },
+    { id: 3, title: 'Satellite Altimetry Data Decoding and Radar Calibration Video Lecture', description: 'Detailed classroom session with Dr. Sarah Connor explaining orbital passes.', resource_type: 'video', course_id: 103, file_url: 'https://cloud-storage.moes.gov.in/videos/altimetry_lecture.mp4', duration_or_pages: '54 Minutes', tags: ['Satellite', 'Radar'], created_by: 7 },
+    { id: 4, title: 'Ocean Current Simulation Modeling Handbook', description: 'Standard operating manual for hydrodynamic grid parameters.', resource_type: 'guide', course_id: 106, file_url: 'https://cloud-storage.moes.gov.in/resources/hydro_handbook.pdf', duration_or_pages: '120 Pages', tags: ['Hydrodynamics', 'MoES'], created_by: 7 },
   ];
 
   memoryStore.announcements = [
-    {
-      id: 1,
-      title: 'National Ocean Sciences Capacity Development Mission 2026 Launched',
-      content: 'The Ministry of Earth Sciences has inaugurated the 2026 digital competency initiative across all autonomous units (INCOIS, IMD, NCMRWF, NIOT). Complete your enrolled courses to receive official verified credentials.',
-      category: 'Mission Update',
-      target_audience: 'all',
-      priority: 'high',
-      status: 'published',
-      published_at: new Date(Date.now() - 5 * 86400000).toISOString(),
-      created_by: 3,
-      created_at: new Date(Date.now() - 5 * 86400000).toISOString(),
-    },
-    {
-      id: 2,
-      title: 'Mandatory Quarterly Assessment Window Open for Technical Staff',
-      content: 'All enrolled trainees must attempt and clear the required MCQ competency benchmarks before the end of the current evaluation cycle to remain eligible for digital certificates.',
-      category: 'Assessment',
-      target_audience: 'trainee',
-      priority: 'normal',
-      status: 'published',
-      published_at: new Date(Date.now() - 2 * 86400000).toISOString(),
-      created_by: 3,
-      created_at: new Date(Date.now() - 2 * 86400000).toISOString(),
-    },
-    {
-      id: 3,
-      title: 'Instructor Briefing: New Curriculum Mapping System Available',
-      content: 'Trainers can now map subject competencies, upload lecture recordings, and attach question banks directly from the Trainer Portal.',
-      category: 'Trainer Advisory',
-      target_audience: 'trainer',
-      priority: 'normal',
-      status: 'published',
-      published_at: new Date(Date.now() - 1 * 86400000).toISOString(),
-      created_by: 3,
-      created_at: new Date(Date.now() - 1 * 86400000).toISOString(),
-    }
+    { id: 1, title: 'National Ocean Sciences Capacity Development Mission 2026 Launched', content: 'MoES launches the unified Capacity Connect portal for institutional competency development.', target_audience: 'all', priority: 'high', is_published: true, created_by: 3, created_at: new Date(Date.now() - 5 * 86400000).toISOString() },
+    { id: 2, title: 'Mandatory Digital Certificate Verification Protocol in Effect', content: 'All course completion certificates are now cryptographically hashed using SHA-256 with admin approval sign-off.', target_audience: 'all', priority: 'critical', is_published: true, created_by: 3, created_at: new Date(Date.now() - 3 * 86400000).toISOString() },
+    { id: 3, title: 'Trainer Assignment & Assessment Scheduling Window Open', content: 'Verified faculty may now configure question banks and review pending trainee submissions.', target_audience: 'trainer', priority: 'medium', is_published: true, created_by: 3, created_at: new Date(Date.now() - 1 * 86400000).toISOString() },
   ];
 
   memoryStore.adminActivityLogs = [
-    {
-      id: 1,
-      action: 'ADMIN_LOGIN',
-      performed_by: 3,
-      performed_by_name: 'Marcus Vance',
-      target_entity: 'SESSION',
-      target_id: 'SES-001',
-      details: 'Administrator Marcus Vance authenticated to Executive Governance Console.',
-      ip_address: '10.0.4.12',
-      created_at: new Date(Date.now() - 1 * 86400000).toISOString(),
-    },
-    {
-      id: 2,
-      action: 'CERTIFICATE_APPROVED',
-      performed_by: 3,
-      performed_by_name: 'Marcus Vance',
-      target_entity: 'CERTIFICATE',
-      target_id: 'MOES-2026-7B9A2F1C',
-      details: 'Approved completion certificate for Alex Johnson on Full-Stack Enterprise Architecture course.',
-      ip_address: '10.0.4.12',
-      created_at: new Date(Date.now() - 6 * 86400000).toISOString(),
-    },
-    {
-      id: 3,
-      action: 'COURSE_PUBLISHED',
-      performed_by: 3,
-      performed_by_name: 'Marcus Vance',
-      target_entity: 'COURSE',
-      target_id: '101',
-      details: 'Published course Modern React Architecture & Performance with Dr. Sarah Connor assigned.',
-      ip_address: '10.0.4.12',
-      created_at: new Date(Date.now() - 10 * 86400000).toISOString(),
-    },
-    {
-      id: 4,
-      action: 'USER_REGISTERED',
-      performed_by: 5,
-      performed_by_name: 'Rahul Verma',
-      target_entity: 'USER',
-      target_id: '5',
-      details: 'New trainee Rahul Verma registered from INCOIS, queued for administrative review.',
-      ip_address: '10.0.2.88',
-      created_at: new Date(Date.now() - 2 * 86400000).toISOString(),
-    }
-  ];
-
-  memoryStore.certificateAuditLogs = [
-    {
-      id: 1,
-      certificate_id: 1,
-      action: 'GENERATED',
-      performed_by: 1,
-      reason: 'Course completed. Certificate generated in pending approval status.',
-      metadata: { certificate_id: 'MOES-2026-7B9A2F1C', sha256_hash: '3af57f09574aa4973507955f0296a44a0f6a6dac325dbcead8dbca74ac831974' },
-      timestamp: new Date(Date.now() - 7 * 86400000).toISOString(),
-    },
-    {
-      id: 2,
-      certificate_id: 1,
-      action: 'APPROVED',
-      performed_by: 3,
-      reason: 'Course completion verified and approved by administrator Marcus Vance.',
-      metadata: { approved_at: new Date(Date.now() - 6 * 86400000).toISOString() },
-      timestamp: new Date(Date.now() - 6 * 86400000).toISOString(),
-    },
-    {
-      id: 3,
-      certificate_id: 2,
-      action: 'GENERATED',
-      performed_by: 1,
-      reason: 'Course completed. Certificate generated in pending approval status.',
-      metadata: { certificate_id: 'MOES-2026-4A2D8F9E', sha256_hash: '488963426e4940c06cdaee3da389ad3ef7b1de276facdde47dd987db819262b1' },
-      timestamp: new Date(Date.now() - 2 * 86400000).toISOString(),
-    }
+    { id: 1, action: 'SYSTEM_INITIALIZED', performed_by: 3, performed_by_name: 'Marcus Vance', target_entity: 'SYSTEM', target_id: '1', details: 'Initial deployment and seeding of Capacity Connect admin database.', ip_address: '127.0.0.1', created_at: new Date(Date.now() - 10 * 86400000).toISOString() },
+    { id: 2, action: 'COURSE_CREATED', performed_by: 3, performed_by_name: 'Marcus Vance', target_entity: 'COURSE', target_id: '101', details: "Admin Marcus Vance created course 'Modern React Architecture & Performance'.", ip_address: '127.0.0.1', created_at: new Date(Date.now() - 8 * 86400000).toISOString() },
+    { id: 3, action: 'CERTIFICATE_APPROVED', performed_by: 3, performed_by_name: 'Marcus Vance', target_entity: 'CERTIFICATE', target_id: '1', details: "Admin Marcus Vance approved certificate MOES-2026-7B9A2F1C for Alex Johnson.", ip_address: '127.0.0.1', created_at: new Date(Date.now() - 6 * 86400000).toISOString() },
+    { id: 4, action: 'RESOURCE_UPLOADED', performed_by: 3, performed_by_name: 'Marcus Vance', target_entity: 'RESOURCE', target_id: '1', details: "Admin Marcus Vance added resource 'Advanced React 18 Patterns'.", ip_address: '127.0.0.1', created_at: new Date(Date.now() - 4 * 86400000).toISOString() },
+    { id: 5, action: 'USER_SUSPENDED', performed_by: 3, performed_by_name: 'Marcus Vance', target_entity: 'USER', target_id: '8', details: "Admin Marcus Vance suspended user Neha Gupta for security reverification.", ip_address: '127.0.0.1', created_at: new Date(Date.now() - 2 * 86400000).toISOString() },
   ];
 
   memoryStore.certificates = [
@@ -620,4 +513,5 @@ module.exports = {
   query,
   getIsPgConnected: () => isPgConnected,
   memoryStore,
+  saveMemoryStore,
 };
