@@ -4,8 +4,52 @@ export const GoogleLoginButton = ({ onGoogleSuccess, onError, label = 'Continue 
   const googleBtnRef = useRef(null);
   const [gisLoaded, setGisLoaded] = useState(false);
 
+  const onGoogleSuccessRef = useRef(onGoogleSuccess);
+  const onErrorRef = useRef(onError);
+
+  useEffect(() => {
+    onGoogleSuccessRef.current = onGoogleSuccess;
+    onErrorRef.current = onError;
+  }, [onGoogleSuccess, onError]);
+
   useEffect(() => {
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '581951726124-9oj663akvjv8kv6nulmuudv5ikr4tbr4.apps.googleusercontent.com';
+
+    const handleCredentialResponse = (response) => {
+      if (response?.credential) {
+        if (onGoogleSuccessRef.current) {
+          onGoogleSuccessRef.current({ credential: response.credential });
+        }
+      } else if (onErrorRef.current) {
+        onErrorRef.current('Google login failed or closed');
+      }
+    };
+
+    const initializeGoogleBtn = (cId) => {
+      try {
+        if (window.google?.accounts?.id) {
+          window.google.accounts.id.initialize({
+            client_id: cId,
+            callback: handleCredentialResponse,
+          });
+
+          if (googleBtnRef.current) {
+            googleBtnRef.current.innerHTML = '';
+            window.google.accounts.id.renderButton(googleBtnRef.current, {
+              theme: 'outline',
+              size: 'large',
+              width: '100%',
+              text: 'continue_with',
+              shape: 'pill',
+            });
+            setGisLoaded(true);
+          }
+        }
+      } catch (err) {
+        console.warn('Google GIS initialization:', err.message);
+        setGisLoaded(false);
+      }
+    };
 
     const loadGoogleSdk = () => {
       if (window.google?.accounts?.id) {
@@ -22,40 +66,8 @@ export const GoogleLoginButton = ({ onGoogleSuccess, onError, label = 'Continue 
       document.body.appendChild(script);
     };
 
-    const initializeGoogleBtn = (cId) => {
-      try {
-        window.google.accounts.id.initialize({
-          client_id: cId,
-          callback: handleCredentialResponse,
-        });
-
-        if (googleBtnRef.current) {
-          googleBtnRef.current.innerHTML = '';
-          window.google.accounts.id.renderButton(googleBtnRef.current, {
-            theme: 'outline',
-            size: 'large',
-            width: '100%',
-            text: 'continue_with',
-            shape: 'pill',
-          });
-          setGisLoaded(true);
-        }
-      } catch (err) {
-        console.warn('Google GIS initialization:', err.message);
-        setGisLoaded(false);
-      }
-    };
-
-    const handleCredentialResponse = (response) => {
-      if (response?.credential) {
-        onGoogleSuccess({ credential: response.credential });
-      } else if (onError) {
-        onError('Google login failed or closed');
-      }
-    };
-
     loadGoogleSdk();
-  }, [onGoogleSuccess, onError]);
+  }, []);
 
   // Fallback button only if GIS script is completely blocked or failed to load
   const handleFallbackAuth = () => {
