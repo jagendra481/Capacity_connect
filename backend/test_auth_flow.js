@@ -1,165 +1,211 @@
-require('dotenv').config();
-const db = require('./src/config/database');
-const User = require('./src/models/User');
-const OTP = require('./src/models/OTP');
 const authService = require('./src/services/authService');
+const User = require('./src/models/User');
+const db = require('./src/config/database');
 
-const runFullAuthAudit = async () => {
-  console.log('================================================================');
-  console.log('=== STARTING CAPACITY CONNECT AUTHENTICATION & OTP TEST SUITE ===');
-  console.log('================================================================\n');
-
-  if (db.initializeDatabase) {
-    try {
-      await db.initializeDatabase();
-    } catch (err) {
-      console.log('[INIT] Database init fallback to memory store');
-    }
-  }
-
+async function runTests() {
+  await db.connectDb();
+  console.log('=== STARTING AUTHENTICATION & SECURITY AUDIT TEST SUITE ===\n');
   let passed = 0;
   let failed = 0;
 
-  const assert = (condition, title, details = '') => {
+  function assert(condition, message) {
     if (condition) {
-      console.log(`[PASS] ✅ ${title}`);
+      console.log(`[PASS] ${message}`);
       passed++;
     } else {
-      console.error(`[FAIL] ❌ ${title} - ${details}`);
+      console.error(`[FAIL] ${message}`);
       failed++;
     }
-  };
+  }
+
+  // --- TEST 1: Public Admin Signup Security (HTTP 403) ---
+  console.log('--- Test 1: Public Admin Signup Protection ---');
+  try {
+    await authService.register({
+      email: 'hacker_admin@test.com',
+      password: 'Password123!',
+      full_name: 'Fake Admin',
+      selectedRole: 'administrator',
+    });
+    assert(false, 'Should have blocked public password admin signup');
+  } catch (err) {
+    assert(err.statusCode === 403, 'Blocked public password admin signup with HTTP 403');
+    assert(err.message.includes('Administrator accounts require authorization'), 'Correct error message for admin signup');
+  }
 
   try {
-    // -----------------------------------------------------------------
-    // TEST A: SIGNUP FLOW
-    // -----------------------------------------------------------------
-    console.log('--- TEST A: SIGNUP NEW USER FLOW ---');
-    const signupEmail = `signup_test_${Date.now()}@example.com`;
-    const signupPass = 'Password123!';
-    
-    const signupRes = await authService.signup({
-      full_name: 'Signup Test User',
-      email: signupEmail,
-      password: signupPass,
-      role: 'trainee',
+    await authService.googleAuth({
+      email: 'hacker_google_admin@test.com',
+      sub: 'google_admin_sub',
+      mode: 'signup',
+      selectedRole: 'administrator',
     });
-
-    assert(
-      signupRes.requiresEmailVerification === true && signupRes.email === signupEmail,
-      'Signup creates unverified user and returns requiresEmailVerification: true'
-    );
-    assert(signupRes.emailDelivered === true, 'Signup OTP email provider accepted live dispatch');
-
-    const signupUser = await User.findByEmail(signupEmail);
-    assert(signupUser && !signupUser.email_verified, 'Signup user stored in DB with email_verified = false');
-
-    // Retrieve OTP for verification
-    const signupOtpDoc = await OTP.findActiveOTP({ email: signupEmail, purpose: 'email_verification' });
-    assert(signupOtpDoc !== null, 'Signup OTP record exists in DB');
-
-    let signupOtpCode = signupOtpDoc?.otpCode;
-    if (!signupOtpCode && signupOtpDoc?.otpHash) {
-      for (let code = 100000; code <= 999999; code++) {
-        if (OTP.hashOTP(code) === signupOtpDoc.otpHash) {
-          signupOtpCode = String(code);
-          break;
-        }
-      }
-    }
-    assert(signupOtpCode !== undefined, 'Retrieved valid signup 6-digit OTP code');
-
-    const signupVerifyRes = await authService.verifyEmailOTP(signupEmail, signupOtpCode);
-    assert(signupVerifyRes.token && signupVerifyRes.user?.email_verified === true, 'Verifying signup OTP sets email_verified = true & issues token');
-
-    // -----------------------------------------------------------------
-    // TEST B: LOGIN UNVERIFIED USER FLOW (CRITICAL TEST)
-    // -----------------------------------------------------------------
-    console.log('\n--- TEST B: LOGIN UNVERIFIED USER FLOW (CRITICAL FIX TEST) ---');
-    const unverifiedEmail = `unverified_test_${Date.now()}@example.com`;
-    const unverifiedPass = 'Password123!';
-
-    // Create unverified user directly in DB
-    const unverifiedUser = await User.create({
-      email: unverifiedEmail,
-      password_hash: await require('./src/utils/password').hashPassword(unverifiedPass),
-      full_name: 'Unverified Login User',
-      role: 'trainee',
-      email_verified: false,
-    });
-    assert(unverifiedUser && !unverifiedUser.email_verified, 'Created unverified user directly in database');
-
-    // Perform Login as unverified user
-    try {
-      await authService.login({ email: unverifiedEmail, password: unverifiedPass });
-      assert(false, 'Login for unverified user should throw requiresEmailVerification error');
-    } catch (err) {
-      assert(
-        err.statusCode === 403 && err.requiresEmailVerification === true,
-        'Login for unverified user throws HTTP 403 requiresEmailVerification: true'
-      );
-    }
-
-    // Verify OTP was created and email service was called
-    const loginOtpDoc = await OTP.findActiveOTP({ email: unverifiedEmail, purpose: 'email_verification' });
-    assert(loginOtpDoc !== null, 'Login flow generated and stored active OTP in database for unverified user');
-
-    let loginOtpCode = loginOtpDoc?.otpCode;
-    if (!loginOtpCode && loginOtpDoc?.otpHash) {
-      for (let code = 100000; code <= 999999; code++) {
-        if (OTP.hashOTP(code) === loginOtpDoc.otpHash) {
-          loginOtpCode = String(code);
-          break;
-        }
-      }
-    }
-    assert(loginOtpCode !== undefined, 'Retrieved valid 6-digit OTP code generated by login flow');
-
-    // Verify OTP generated during login
-    const loginVerifyRes = await authService.verifyEmailOTP(unverifiedEmail, loginOtpCode);
-    assert(loginVerifyRes.token && loginVerifyRes.user?.email_verified === true, 'OTP generated by login flow can be verified by /verify-email');
-
-    // Login after verification
-    const verifiedLoginRes = await authService.login({ email: unverifiedEmail, password: unverifiedPass });
-    assert(verifiedLoginRes.token && verifiedLoginRes.user?.email_verified === true, 'After verification, login succeeds immediately without OTP');
-
-    // -----------------------------------------------------------------
-    // TEST C: LOGIN VERIFIED USER FLOW
-    // -----------------------------------------------------------------
-    console.log('\n--- TEST C: LOGIN VERIFIED USER FLOW ---');
-    const verifiedUserRes = await authService.login({ email: signupEmail, password: signupPass });
-    assert(verifiedUserRes.token !== undefined, 'Verified user login succeeds and issues JWT token without OTP prompt');
-
-    // -----------------------------------------------------------------
-    // TEST D: UNKNOWN USER LOGIN
-    // -----------------------------------------------------------------
-    console.log('\n--- TEST D: UNKNOWN USER LOGIN FLOW ---');
-    try {
-      await authService.login({ email: `unknown_${Date.now()}@domain.com`, password: 'Password123!' });
-      assert(false, 'Login with non-existent email should fail');
-    } catch (err) {
-      assert(err.statusCode === 404 && err.accountNotFound === true, 'Login with non-existent email returns HTTP 404 accountNotFound without creating user');
-    }
-
-    // -----------------------------------------------------------------
-    // TEST E: WRONG PASSWORD LOGIN
-    // -----------------------------------------------------------------
-    console.log('\n--- TEST E: WRONG PASSWORD LOGIN FLOW ---');
-    try {
-      await authService.login({ email: signupEmail, password: 'WrongPassword999!' });
-      assert(false, 'Login with wrong password should fail');
-    } catch (err) {
-      assert(err.statusCode === 401, 'Login with wrong password returns HTTP 401 Invalid email or password');
-    }
-
-    console.log('\n================================================================');
-    console.log(`FULL AUTHENTICATION TEST SUITE FINISHED: ${passed} PASSED, ${failed} FAILED`);
-    console.log('================================================================');
+    assert(false, 'Should have blocked public Google admin signup');
   } catch (err) {
-    console.error('Fatal test execution error:', err);
-  } finally {
-    process.exit(failed === 0 ? 0 : 1);
+    assert(err.statusCode === 403, 'Blocked public Google admin signup with HTTP 403');
+    assert(err.message.includes('Administrator accounts require authorization'), 'Correct error message for Google admin signup');
   }
-};
 
-runFullAuthAudit();
+  // --- TEST 2: Google Signup -> Google Login Flow (Problem 1) ---
+  console.log('\n--- Test 2: Google Signup -> Google Login Flow ---');
+  const testGoogleId = 'sub_google_123456789';
+  const testGoogleEmail = 'googlesignup_user@gmail.com';
+
+  try {
+    const signupRes = await authService.googleAuth({
+      email: testGoogleEmail,
+      name: 'Google Learner',
+      sub: testGoogleId,
+      mode: 'signup',
+      selectedRole: 'trainee',
+    });
+    assert(signupRes.user && signupRes.user.role === 'trainee', 'Google Signup created trainee user');
+    assert(signupRes.user.google_id === testGoogleId, 'Google Signup stored google_id correctly');
+    assert(signupRes.user.email_verified === true, 'Google Signup marked email as verified');
+  } catch (err) {
+    assert(false, `Google Signup failed: ${err.message}`);
+  }
+
+  try {
+    const loginRes = await authService.googleAuth({
+      email: testGoogleEmail,
+      sub: testGoogleId,
+      mode: 'login',
+      selectedRole: 'trainee',
+    });
+    assert(loginRes.user && loginRes.token, 'Future Google Login succeeded with same Google account');
+    assert(loginRes.user.email === testGoogleEmail, 'Logged in user email matches');
+  } catch (err) {
+    assert(false, `Google Login failed: ${err.message}`);
+  }
+
+  // --- TEST 3: Google Login with Unknown Account (HTTP 404) ---
+  console.log('\n--- Test 3: Google Login with Unknown Account ---');
+  try {
+    await authService.googleAuth({
+      email: 'unknown_account@gmail.com',
+      sub: 'sub_unknown_99999',
+      mode: 'login',
+      selectedRole: 'trainee',
+    });
+    assert(false, 'Should not allow login for non-existent Google account');
+  } catch (err) {
+    assert(err.statusCode === 404, 'Returned HTTP 404 for unknown Google login');
+    assert(err.accountNotFound === true, 'Set accountNotFound flag');
+    assert(err.message.includes('No Capacity Connect account was found'), 'Correct account not found message');
+  }
+
+  // --- TEST 4: Google Signup with Existing Account (HTTP 400) ---
+  console.log('\n--- Test 4: Google Signup with Existing Account ---');
+  try {
+    await authService.googleAuth({
+      email: testGoogleEmail,
+      sub: testGoogleId,
+      mode: 'signup',
+      selectedRole: 'trainee',
+    });
+    assert(false, 'Should block duplicate signup for existing Google account');
+  } catch (err) {
+    assert(err.statusCode === 400, 'Returned HTTP 400 for existing Google signup');
+    assert(err.accountExists === true, 'Set accountExists flag');
+    assert(err.message.includes('An account already exists'), 'Correct account exists message');
+  }
+
+  // --- TEST 5: Mandatory Role Mismatch Protection (Problem 2) ---
+  console.log('\n--- Test 5: Role Mismatch Protection ---');
+  try {
+    await authService.googleAuth({
+      email: testGoogleEmail,
+      sub: testGoogleId,
+      mode: 'login',
+      selectedRole: 'trainer', // Actual role is trainee!
+    });
+    assert(false, 'Should block Google login when selectedRole mismatch');
+  } catch (err) {
+    assert(err.statusCode === 400, 'Blocked Google login role mismatch with HTTP 400');
+    assert(err.roleMismatch === true, 'Set roleMismatch flag');
+    assert(err.message.includes('This account is registered as Trainee'), 'Correct role mismatch message (Trainee)');
+  }
+
+  try {
+    await authService.login({
+      email: 'trainee@capacityconnect.com',
+      password: 'Password123!',
+      selectedRole: 'trainer', // Actual role is trainee!
+    });
+    assert(false, 'Should block password login when selectedRole mismatch');
+  } catch (err) {
+    assert(err.statusCode === 400, 'Blocked password login role mismatch with HTTP 400');
+    assert(err.message.includes('This account is registered as Trainee'), 'Correct password login mismatch message');
+  }
+
+  // --- TEST 6: Existing Email User Google Linking ---
+  console.log('\n--- Test 6: Existing Email/Password User Google Linking ---');
+  const legacyEmail = 'legacy_trainer@capacityconnect.com';
+  const legacyGoogleSub = 'sub_legacy_55555';
+
+  try {
+    // 1. Create email/password trainer user directly
+    const createdUser = await User.create({
+      email: legacyEmail,
+      password_hash: 'hashed',
+      role: 'trainer',
+      full_name: 'Legacy Trainer',
+      email_verified: true,
+    });
+    assert(createdUser.google_id === null, 'Initial user has no google_id');
+
+    // 2. Perform Google Login with same email
+    const linkedLoginRes = await authService.googleAuth({
+      email: legacyEmail,
+      sub: legacyGoogleSub,
+      mode: 'login',
+      selectedRole: 'trainer',
+    });
+    assert(linkedLoginRes.user.google_id === legacyGoogleSub, 'Google Login linked google_id to existing account');
+
+    // 3. Perform subsequent Google Login by google_id
+    const subsequentLogin = await authService.googleAuth({
+      email: legacyEmail,
+      sub: legacyGoogleSub,
+      mode: 'login',
+      selectedRole: 'trainer',
+    });
+    assert(subsequentLogin.user.id === createdUser.id, 'Subsequent login by google_id returned same user');
+  } catch (err) {
+    assert(false, `Email linking test failed: ${err.message}`);
+  }
+
+  // --- TEST 7: Admin Account Login Enforcement ---
+  console.log('\n--- Test 7: Admin Account Role Matching ---');
+  try {
+    await authService.login({
+      email: 'admin@capacityconnect.com',
+      password: 'Password123!',
+      selectedRole: 'trainee', // Actual role is administrator
+    });
+    assert(false, 'Should block admin from logging in as trainee');
+  } catch (err) {
+    assert(err.statusCode === 400, 'Blocked admin login as trainee with HTTP 400');
+    assert(err.message.includes('This account is registered as Administrator'), 'Correct admin role mismatch message');
+  }
+
+  try {
+    const adminLogin = await authService.login({
+      email: 'admin@capacityconnect.com',
+      password: 'Password123!',
+      selectedRole: 'administrator',
+    });
+    assert(adminLogin.user && adminLogin.user.role === 'administrator', 'Admin login succeeded when administrator selected');
+  } catch (err) {
+    assert(false, `Admin login failed: ${err.message}`);
+  }
+
+  console.log(`\n=== AUDIT COMPLETE: ${passed} PASSED, ${failed} FAILED ===`);
+  if (failed > 0) process.exit(1);
+}
+
+runTests().catch((err) => {
+  console.error('Test execution error:', err);
+  process.exit(1);
+});

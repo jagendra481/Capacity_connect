@@ -54,28 +54,30 @@ export const AuthProvider = ({ children }) => {
     return authService.resendOTP(email);
   };
 
-  const sendOTP = async (email) => {
-    return authService.sendOTP(email);
+  const sendOTP = async (email, selectedRole) => {
+    return authService.sendOTP(email, selectedRole);
   };
 
-  const verifyOTP = async (email, otp) => {
-    const res = await authService.verifyOTP(email, otp);
+  const verifyOTP = async (email, otp, selectedRole) => {
+    const res = await authService.verifyOTP(email, otp, selectedRole);
     if (res.data?.user) {
       setUser(res.data.user);
     }
     return res;
   };
 
-  const loginWithGoogle = async (googleData) => {
-    const res = await authService.googleAuth(googleData, 'login');
+  const loginWithGoogle = async (googleData, selectedRole) => {
+    const payload = typeof googleData === 'object' ? { ...googleData, selectedRole } : { credential: googleData, selectedRole };
+    const res = await authService.googleAuth(payload, 'login');
     if (res.data?.user) {
       setUser(res.data.user);
     }
     return res;
   };
 
-  const signupWithGoogle = async (googleData) => {
-    const res = await authService.googleAuth(googleData, 'signup');
+  const signupWithGoogle = async (googleData, selectedRole) => {
+    const payload = typeof googleData === 'object' ? { ...googleData, selectedRole } : { credential: googleData, selectedRole };
+    const res = await authService.googleAuth(payload, 'signup');
     if (res.data?.user) {
       setUser(res.data.user);
     }

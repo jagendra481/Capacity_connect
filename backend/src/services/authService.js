@@ -12,7 +12,26 @@ class AuthService {
     return this.register(data);
   }
 
-  async register({ email, password, full_name, role = 'trainee', department_id = 1, designation = null, employee_student_id = null }) {
+  async register({ email, password, full_name, role, selectedRole, department_id = 1, designation = null, employee_student_id = null }) {
+    const targetRole = selectedRole || role;
+    if (!targetRole) {
+      const err = new Error('Role selection is mandatory. Please select Trainee or Trainer.');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    if (targetRole === 'administrator') {
+      const err = new Error('Administrator accounts require authorization.');
+      err.statusCode = 403;
+      throw err;
+    }
+
+    if (!['trainee', 'trainer'].includes(targetRole)) {
+      const err = new Error('Invalid role selected. Public accounts can only be Trainee or Trainer.');
+      err.statusCode = 400;
+      throw err;
+    }
+
     if (!email || !password || !full_name) {
       const err = new Error('Full name, email, and password are required.');
       err.statusCode = 400;
@@ -53,8 +72,7 @@ class AuthService {
       };
     }
 
-    // Role Security: Public signups are forced to 'trainee'
-    const cleanRole = 'trainee';
+    const cleanRole = targetRole;
     const password_hash = await hashPassword(password);
 
     const user = await User.create({
@@ -196,9 +214,16 @@ class AuthService {
     };
   }
 
-  async login({ email, password }) {
+  async login({ email, password, role, selectedRole }) {
     if (!email || !password) {
       const err = new Error('Email and password are required.');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const targetRole = selectedRole || role;
+    if (!targetRole) {
+      const err = new Error('Role selection is mandatory. Please select your account role.');
       err.statusCode = 400;
       throw err;
     }
@@ -218,6 +243,16 @@ class AuthService {
     if (!isMatch) {
       const err = new Error('Invalid email or password.');
       err.statusCode = 401;
+      throw err;
+    }
+
+    // Role Security Rule: Selected role MUST match stored user role
+    if (user.role !== targetRole) {
+      const capitalized = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+      const err = new Error(`This account is registered as ${capitalized}. Please select ${capitalized} to continue.`);
+      err.statusCode = 400;
+      err.roleMismatch = true;
+      err.storedRole = user.role;
       throw err;
     }
 
@@ -299,11 +334,43 @@ class AuthService {
     };
   }
 
-  async sendOTP({ email }) {
+  async sendOTP({ email, role, selectedRole }) {
+    if (!email) {
+      const err = new Error('Email address is required.');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const cleanEmail = String(email).trim().toLowerCase();
+    const user = await User.findByEmail(cleanEmail);
+
+    if (!user) {
+      const err = new Error('Account not found. Please sign up first.');
+      err.statusCode = 404;
+      err.accountNotFound = true;
+      throw err;
+    }
+
+    const targetRole = selectedRole || role;
+    if (!targetRole) {
+      const err = new Error('Role selection is mandatory. Please select your account role.');
+      err.statusCode = 400;
+      throw err;
+    }
+
+    if (user.role !== targetRole) {
+      const capitalized = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+      const err = new Error(`This account is registered as ${capitalized}. Please select ${capitalized} to continue.`);
+      err.statusCode = 400;
+      err.roleMismatch = true;
+      err.storedRole = user.role;
+      throw err;
+    }
+
     return this.resendOTP({ email, purpose: 'otp_login' });
   }
 
-  async verifyOTP({ email, otp }) {
+  async verifyOTP({ email, otp, role, selectedRole }) {
     if (!email || !otp) {
       const err = new Error('Email and 6-digit OTP code are required.');
       err.statusCode = 400;
@@ -311,6 +378,24 @@ class AuthService {
     }
 
     const cleanEmail = String(email).trim().toLowerCase();
+    let user = await User.findByEmail(cleanEmail);
+    if (!user) {
+      const err = new Error('Account not found. Please sign up first.');
+      err.statusCode = 404;
+      err.accountNotFound = true;
+      throw err;
+    }
+
+    const targetRole = selectedRole || role;
+    if (targetRole && user.role !== targetRole) {
+      const capitalized = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+      const err = new Error(`This account is registered as ${capitalized}. Please select ${capitalized} to continue.`);
+      err.statusCode = 400;
+      err.roleMismatch = true;
+      err.storedRole = user.role;
+      throw err;
+    }
+
     const verification = await OTPModel.verifyOTP({
       email: cleanEmail,
       otp,
@@ -320,14 +405,6 @@ class AuthService {
     if (!verification.isValid) {
       const err = new Error(verification.message);
       err.statusCode = 400;
-      throw err;
-    }
-
-    let user = await User.findByEmail(cleanEmail);
-    if (!user) {
-      const err = new Error('Account not found. Please sign up first.');
-      err.statusCode = 404;
-      err.accountNotFound = true;
       throw err;
     }
 
@@ -356,11 +433,12 @@ class AuthService {
     };
   }
 
-  async googleAuth({ credential, email: bodyEmail, name: bodyName, picture: bodyPicture, sub: bodySub, mode = 'login' }) {
+  async googleAuth({ credential, email: bodyEmail, name: bodyName, picture: bodyPicture, sub: bodySub, mode = 'login', role, selectedRole }) {
     let email = bodyEmail;
     let name = bodyName;
     let picture = bodyPicture;
     let googleId = bodySub;
+    const targetRole = selectedRole || role;
 
     // Backend Token Validation against Google OAuth API
     if (credential) {
@@ -406,27 +484,63 @@ class AuthService {
 
     if (!user) {
       user = await User.findByEmail(cleanEmail);
-      if (user) {
+      if (user && googleId) {
         // Link google account to existing email user
-        user = await User.linkGoogleAccount(user.id, googleId || `google_${Date.now()}`);
+        user = await User.linkGoogleAccount(user.id, googleId);
       }
     }
 
-    // STRICT GOOGLE LOGIN RULE: If mode === 'login' and user is not found -> DO NOT CREATE USER
-    if (!user && mode === 'login') {
-      const err = new Error('No Capacity Connect account was found for this Google account. Please sign up first.');
-      err.statusCode = 404;
-      err.accountNotFound = true;
+    if (!targetRole) {
+      const err = new Error('Role selection is mandatory. Please select your role before continuing.');
+      err.statusCode = 400;
       throw err;
     }
 
-    // GOOGLE SIGNUP RULE: If mode === 'signup' and user is not found -> Create user
-    if (!user && mode === 'signup') {
+    // GOOGLE LOGIN MODE: Must exist and role must match
+    if (mode === 'login') {
+      if (!user) {
+        const err = new Error('No Capacity Connect account was found for this Google account. Please sign up first.');
+        err.statusCode = 404;
+        err.accountNotFound = true;
+        throw err;
+      }
+
+      if (user.role !== targetRole) {
+        const capitalized = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+        const err = new Error(`This account is registered as ${capitalized}. Please select ${capitalized} to continue.`);
+        err.statusCode = 400;
+        err.roleMismatch = true;
+        err.storedRole = user.role;
+        throw err;
+      }
+    }
+
+    // GOOGLE SIGNUP MODE: Cannot exist and role cannot be administrator
+    if (mode === 'signup') {
+      if (user) {
+        const err = new Error('An account already exists with this Google account. Please sign in instead.');
+        err.statusCode = 400;
+        err.accountExists = true;
+        throw err;
+      }
+
+      if (targetRole === 'administrator') {
+        const err = new Error('Administrator accounts require authorization.');
+        err.statusCode = 403;
+        throw err;
+      }
+
+      if (!['trainee', 'trainer'].includes(targetRole)) {
+        const err = new Error('Invalid role selected. Public accounts can only be Trainee or Trainer.');
+        err.statusCode = 400;
+        throw err;
+      }
+
       user = await User.create({
         email: cleanEmail,
         full_name: name || cleanEmail.split('@')[0],
         google_id: googleId || `google_${Date.now()}`,
-        role: 'trainee',
+        role: targetRole,
         department_id: 1,
         email_verified: true, // Google identity pre-verified
         profile_image: picture,
