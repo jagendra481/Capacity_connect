@@ -32,7 +32,7 @@
       "email_verified": true,
       "status": "active",
       "created_at": "2026-09-05T06:33:04.878Z",
-      "last_login": "2026-09-05T07:17:12.384Z"
+      "last_login": "2026-09-05T07:02:04.904Z"
     },
     {
       "id": 4,
@@ -192,35 +192,61 @@
     },
     {
       "id": 14,
-      "email": "googlesignup_1788592632158@gmail.com",
-      "password_hash": "GOOGLE_OAUTH_ACCOUNT",
-      "role": "trainee",
+      "email": "scientist_1788591879417@moes.gov.in",
+      "password_hash": "$2a$10$a0ikUle2iCh53xquTR79XeBmH6F5AHbG.Fb0S/LYwdUdQqpkc6sdC",
+      "role": "trainer",
       "department_id": 1,
-      "full_name": "Google Learner",
-      "designation": "TRAINEE",
-      "employee_student_id": null,
+      "full_name": "Dr. Vikram Sarabhai Fellow",
+      "designation": "Research Fellow",
       "email_verified": true,
-      "profile_image": "https://api.dicebear.com/7.x/avataaars/svg?seed=Google%20Learner",
+      "profile_image": "https://api.dicebear.com/7.x/avataaars/svg?seed=Dr.%20Vikram%20Sarabhai%20Fellow",
       "status": "active",
-      "google_id": "sub_google_1788592632158",
-      "created_at": "2026-09-05T07:17:12.158Z",
-      "last_login": "2026-09-05T07:17:12.162Z"
+      "created_at": "2026-09-05T07:04:39.483Z",
+      "last_login_at": null,
+      "suspension_reason": "Security compliance review"
     },
     {
       "id": 15,
-      "email": "legacy_trainer_1788592632232@capacityconnect.com",
-      "password_hash": "hashed",
+      "email": "deputy.admin_1788591879546@capacityconnect.com",
+      "password_hash": "$2a$10$NQmLb7L3XPI58byd/x4G4ew/3KyRUG.1adCW690q62FPGtC8I2ylu",
+      "role": "administrator",
+      "department_id": 1,
+      "full_name": "Deputy Director Admin",
+      "designation": "Deputy Administrative Officer",
+      "email_verified": true,
+      "profile_image": "https://api.dicebear.com/7.x/avataaars/svg?seed=Deputy%20Director%20Admin",
+      "status": "active",
+      "created_at": "2026-09-05T07:04:39.605Z",
+      "last_login_at": null
+    },
+    {
+      "id": 16,
+      "email": "scientist_1788591939399@moes.gov.in",
+      "password_hash": "$2a$10$uMrIzf7DQDD/3EvafMZR2uhA5TmOo26t4JGl80ktGrfGLxyjtDLYi",
       "role": "trainer",
       "department_id": 1,
-      "full_name": "Legacy Trainer",
-      "designation": "TRAINER",
-      "employee_student_id": null,
+      "full_name": "Dr. Vikram Sarabhai Fellow",
+      "designation": "Research Fellow",
       "email_verified": true,
-      "profile_image": "https://api.dicebear.com/7.x/avataaars/svg?seed=Legacy%20Trainer",
+      "profile_image": "https://api.dicebear.com/7.x/avataaars/svg?seed=Dr.%20Vikram%20Sarabhai%20Fellow",
       "status": "active",
-      "google_id": "sub_legacy_1788592632232",
-      "created_at": "2026-09-05T07:17:12.232Z",
-      "last_login": "2026-09-05T07:17:12.235Z"
+      "created_at": "2026-09-05T07:05:39.457Z",
+      "last_login_at": null,
+      "suspension_reason": "Security compliance review"
+    },
+    {
+      "id": 17,
+      "email": "deputy.admin_1788591939519@capacityconnect.com",
+      "password_hash": "$2a$10$.C5M5KqO6XJ9WVbiqcyL8uSmiNI7DkxboCV1F2m7abygQJn5QOFS2",
+      "role": "administrator",
+      "department_id": 1,
+      "full_name": "Deputy Director Admin",
+      "designation": "Deputy Administrative Officer",
+      "email_verified": true,
+      "profile_image": "https://api.dicebear.com/7.x/avataaars/svg?seed=Deputy%20Director%20Admin",
+      "status": "active",
+      "created_at": "2026-09-05T07:05:39.577Z",
+      "last_login_at": null
     }
   ],
   "userProfiles": [
@@ -343,21 +369,464 @@
     },
     {
       "user_id": 14,
-      "designation": "TRAINEE",
-      "bio": "New trainee member",
-      "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=Google%20Learner",
+      "designation": "Research Fellow",
+      "bio": "Member of INCOIS Ocean Modeling Unit",
+      "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=Dr.%20Vikram%20Sarabhai%20Fellow",
+      "phone": "+91 99887 76655",
+      "organization": "INCOIS Ocean Modeling Unit",
+      "qualifications": "Ph.D Physical Oceanography",
+      "experience": "6 Years in Altimetry",
+      "skills": [
+        "Satellite Data",
+        "Python",
+        "Radar"
+      ],
       "xp": 0,
       "streak_days": 0,
       "competency_score": 0
     },
     {
       "user_id": 15,
-      "designation": "TRAINER",
-      "bio": "New trainer member",
-      "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=Legacy%20Trainer",
+      "designation": "Deputy Administrative Officer",
+      "bio": "Member of Ministry of Earth Sciences",
+      "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=Deputy%20Director%20Admin",
+      "phone": null,
+      "organization": "Ministry of Earth Sciences",
+      "qualifications": null,
+      "experience": null,
+      "skills": [
+        "manage_users",
+        "manage_courses",
+        "manage_certificates"
+      ],
       "xp": 0,
       "streak_days": 0,
       "competency_score": 0
+    },
+    {
+      "user_id": 16,
+      "designation": "Research Fellow",
+      "bio": "Member of INCOIS Ocean Modeling Unit",
+      "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=Dr.%20Vikram%20Sarabhai%20Fellow",
+      "phone": "+91 99887 76655",
+      "organization": "INCOIS Ocean Modeling Unit",
+      "qualifications": "Ph.D Physical Oceanography",
+      "experience": "6 Years in Altimetry",
+      "skills": [
+        "Satellite Data",
+        "Python",
+        "Radar"
+      ],
+      "xp": 0,
+      "streak_days": 0,
+      "competency_score": 0
+    },
+    {
+      "user_id": 17,
+      "designation": "Deputy Administrative Officer",
+      "bio": "Member of Ministry of Earth Sciences",
+      "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=Deputy%20Director%20Admin",
+      "phone": null,
+      "organization": "Ministry of Earth Sciences",
+      "qualifications": null,
+      "experience": null,
+      "skills": [
+        "manage_users",
+        "manage_courses",
+        "manage_certificates"
+      ],
+      "xp": 0,
+      "streak_days": 0,
+      "competency_score": 0
+    }
+  ],
+  "courses": [
+    {
+      "id": 101,
+      "title": "Modern React Architecture & Performance",
+      "description": "Master component decoupling, micro-frontends, custom hooks, and rendering optimization.",
+      "category": "Engineering & Ocean Tech",
+      "level": "intermediate",
+      "duration_hours": 40,
+      "max_enrollment": 100,
+      "trainer_id": 2,
+      "is_published": true,
+      "created_at": "2026-06-07T07:05:39.397Z"
+    },
+    {
+      "id": 102,
+      "title": "Node.js, Express & API Engineering",
+      "description": "Backend architectural design, secure RESTful APIs, rate-limiting, and middleware.",
+      "category": "Engineering & Ocean Tech",
+      "level": "intermediate",
+      "duration_hours": 45,
+      "max_enrollment": 80,
+      "trainer_id": 2,
+      "is_published": true,
+      "created_at": "2026-06-17T07:05:39.397Z"
+    },
+    {
+      "id": 103,
+      "title": "Satellite Remote Sensing & GIS Analysis",
+      "description": "Satellite altimetry, hyperspectral data decoding, and coastal vulnerability mapping.",
+      "category": "Satellite Remote Sensing",
+      "level": "advanced",
+      "duration_hours": 60,
+      "max_enrollment": 60,
+      "trainer_id": 7,
+      "is_published": true,
+      "created_at": "2026-06-27T07:05:39.397Z"
+    },
+    {
+      "id": 104,
+      "title": "Ocean Data Modeling & Machine Learning",
+      "description": "Predictive neural networks for cyclone forecasting, sea surface temperatures, and wave height.",
+      "category": "AI & Machine Learning",
+      "level": "advanced",
+      "duration_hours": 50,
+      "max_enrollment": 50,
+      "trainer_id": 7,
+      "is_published": true,
+      "created_at": "2026-07-07T07:05:39.397Z"
+    },
+    {
+      "id": 105,
+      "title": "Radar Meteorology & Precipitation Dynamics",
+      "description": "Doppler radar calibration, signal processing, and severe weather warning systems.",
+      "category": "Radar Meteorology",
+      "level": "intermediate",
+      "duration_hours": 35,
+      "max_enrollment": 70,
+      "trainer_id": 2,
+      "is_published": true,
+      "created_at": "2026-07-17T07:05:39.397Z"
+    },
+    {
+      "id": 106,
+      "title": "Computational Fluid Dynamics for Ocean Currents",
+      "description": "Hydrodynamic simulation pipelines, Navier-Stokes solvers, and bathymetric grids.",
+      "category": "Computational Fluid Dynamics",
+      "level": "advanced",
+      "duration_hours": 65,
+      "max_enrollment": 40,
+      "trainer_id": 7,
+      "is_published": true,
+      "created_at": "2026-07-27T07:05:39.397Z"
+    },
+    {
+      "id": 107,
+      "title": "Polar Ice Cap Cryosphere Modeling",
+      "description": "Satellite radar interferometry analysis of Arctic and Antarctic glacial movement.",
+      "category": "Satellite Remote Sensing",
+      "level": "advanced",
+      "duration_hours": 55,
+      "max_enrollment": 45,
+      "trainer_id": 7,
+      "is_published": true,
+      "created_at": "2026-08-06T07:05:39.397Z"
+    }
+  ],
+  "certificates": [
+    {
+      "id": 1,
+      "certificate_id": "MOES-2026-7B9A2F1C",
+      "certificate_hash": "MOES-2026-7B9A2F1C",
+      "user_id": 1,
+      "user_name": "Alex Johnson",
+      "trainee_name_snapshot": "Alex Johnson",
+      "course_id": 101,
+      "course_name_snapshot": "Modern React Architecture & Performance",
+      "assessment_id": 1,
+      "title": "Modern React Architecture & Performance",
+      "issuing_organization": "Ministry of Earth Sciences - Capacity Connect",
+      "sha256_hash": "3af57f09574aa4973507955f0296a44a0f6a6dac325dbcead8dbca74ac831974",
+      "status": "approved",
+      "issued_date": "2026-02-28T10:00:00.000Z",
+      "completion_date": "2026-02-28",
+      "approved_by": 3,
+      "approved_at": "2026-08-30T07:05:39.397Z",
+      "rejected_by": null,
+      "rejected_at": null,
+      "rejection_reason": null,
+      "revoked_by": null,
+      "revoked_at": null,
+      "revocation_reason": null,
+      "verification_count": 14,
+      "last_verified_at": "2026-09-04T07:05:39.397Z",
+      "verification_url": "http://localhost:5173/certificates/verify/MOES-2026-7B9A2F1C",
+      "metadata": {
+        "department": "Ocean Sciences & Climate Modeling",
+        "grade": "Distinction"
+      }
+    },
+    {
+      "id": 2,
+      "certificate_id": "MOES-2026-4A2D8F9E",
+      "certificate_hash": "MOES-2026-4A2D8F9E",
+      "user_id": 1,
+      "user_name": "Alex Johnson",
+      "trainee_name_snapshot": "Alex Johnson",
+      "course_id": 102,
+      "course_name_snapshot": "Node.js, Express & API Engineering",
+      "assessment_id": 2,
+      "title": "Node.js, Express & API Engineering",
+      "issuing_organization": "Ministry of Earth Sciences - Capacity Connect",
+      "sha256_hash": "488963426e4940c06cdaee3da389ad3ef7b1de276facdde47dd987db819262b1",
+      "status": "pending_approval",
+      "issued_date": "2026-03-03T14:30:00.000Z",
+      "completion_date": "2026-03-03",
+      "approved_by": null,
+      "approved_at": null,
+      "rejected_by": null,
+      "rejected_at": null,
+      "rejection_reason": null,
+      "revoked_by": null,
+      "revoked_at": null,
+      "revocation_reason": null,
+      "verification_count": 0,
+      "last_verified_at": null,
+      "verification_url": "http://localhost:5173/certificates/verify/MOES-2026-4A2D8F9E",
+      "metadata": {
+        "department": "Ocean Sciences & Climate Modeling"
+      }
+    }
+  ],
+  "adminActivityLogs": [
+    {
+      "id": 10,
+      "action": "USER_PASSWORD_RESET",
+      "performed_by": 1,
+      "performed_by_name": "Dr. Jitendra Singh (Super Admin)",
+      "target_entity": "USER",
+      "target_id": "16",
+      "details": "Admin Dr. Jitendra Singh (Super Admin) reset password for user Dr. Vikram Sarabhai Fellow (scientist_1788591939399@moes.gov.in).",
+      "ip_address": "127.0.0.1",
+      "metadata": {},
+      "created_at": "2026-09-05T07:05:39.518Z"
+    },
+    {
+      "id": 9,
+      "action": "USER_ROLE_CHANGED",
+      "performed_by": 1,
+      "performed_by_name": "Dr. Jitendra Singh (Super Admin)",
+      "target_entity": "USER",
+      "target_id": "16",
+      "details": "Admin Dr. Jitendra Singh (Super Admin) changed role of user Dr. Vikram Sarabhai Fellow from trainee to trainer.",
+      "ip_address": "127.0.0.1",
+      "metadata": {
+        "oldRole": "trainee",
+        "newRole": "trainer"
+      },
+      "created_at": "2026-09-05T07:05:39.461Z"
+    },
+    {
+      "id": 8,
+      "action": "USER_ACTIVE",
+      "performed_by": 1,
+      "performed_by_name": "Dr. Jitendra Singh (Super Admin)",
+      "target_entity": "USER",
+      "target_id": "16",
+      "details": "Admin Dr. Jitendra Singh (Super Admin) updated status of user ID 16 to active.",
+      "ip_address": "127.0.0.1",
+      "metadata": {
+        "newStatus": "active",
+        "reason": null
+      },
+      "created_at": "2026-09-05T07:05:39.460Z"
+    },
+    {
+      "id": 7,
+      "action": "USER_SUSPENDED",
+      "performed_by": 1,
+      "performed_by_name": "Dr. Jitendra Singh (Super Admin)",
+      "target_entity": "USER",
+      "target_id": "16",
+      "details": "Admin Dr. Jitendra Singh (Super Admin) updated status of user ID 16 to suspended. Reason: Security compliance review",
+      "ip_address": "127.0.0.1",
+      "metadata": {
+        "newStatus": "suspended",
+        "reason": "Security compliance review"
+      },
+      "created_at": "2026-09-05T07:05:39.459Z"
+    },
+    {
+      "id": 6,
+      "action": "USER_CREATED",
+      "performed_by": 1,
+      "performed_by_name": "Dr. Jitendra Singh (Super Admin)",
+      "target_entity": "USER",
+      "target_id": "16",
+      "details": "Admin Dr. Jitendra Singh (Super Admin) created trainee user Dr. Vikram Sarabhai Fellow (scientist_1788591939399@moes.gov.in).",
+      "ip_address": "127.0.0.1",
+      "metadata": {
+        "role": "trainee",
+        "status": "active",
+        "email": "scientist_1788591939399@moes.gov.in"
+      },
+      "created_at": "2026-09-05T07:05:39.458Z"
+    },
+    {
+      "id": 5,
+      "action": "USER_PASSWORD_RESET",
+      "performed_by": 1,
+      "performed_by_name": "Dr. Jitendra Singh (Super Admin)",
+      "target_entity": "USER",
+      "target_id": "14",
+      "details": "Admin Dr. Jitendra Singh (Super Admin) reset password for user Dr. Vikram Sarabhai Fellow (scientist_1788591879417@moes.gov.in).",
+      "ip_address": "127.0.0.1",
+      "metadata": {},
+      "created_at": "2026-09-05T07:04:39.546Z"
+    },
+    {
+      "id": 4,
+      "action": "USER_ROLE_CHANGED",
+      "performed_by": 1,
+      "performed_by_name": "Dr. Jitendra Singh (Super Admin)",
+      "target_entity": "USER",
+      "target_id": "14",
+      "details": "Admin Dr. Jitendra Singh (Super Admin) changed role of user Dr. Vikram Sarabhai Fellow from trainee to trainer.",
+      "ip_address": "127.0.0.1",
+      "metadata": {
+        "oldRole": "trainee",
+        "newRole": "trainer"
+      },
+      "created_at": "2026-09-05T07:04:39.486Z"
+    },
+    {
+      "id": 3,
+      "action": "USER_ACTIVE",
+      "performed_by": 1,
+      "performed_by_name": "Dr. Jitendra Singh (Super Admin)",
+      "target_entity": "USER",
+      "target_id": "14",
+      "details": "Admin Dr. Jitendra Singh (Super Admin) updated status of user ID 14 to active.",
+      "ip_address": "127.0.0.1",
+      "metadata": {
+        "newStatus": "active",
+        "reason": null
+      },
+      "created_at": "2026-09-05T07:04:39.485Z"
+    },
+    {
+      "id": 2,
+      "action": "USER_SUSPENDED",
+      "performed_by": 1,
+      "performed_by_name": "Dr. Jitendra Singh (Super Admin)",
+      "target_entity": "USER",
+      "target_id": "14",
+      "details": "Admin Dr. Jitendra Singh (Super Admin) updated status of user ID 14 to suspended. Reason: Security compliance review",
+      "ip_address": "127.0.0.1",
+      "metadata": {
+        "newStatus": "suspended",
+        "reason": "Security compliance review"
+      },
+      "created_at": "2026-09-05T07:04:39.485Z"
+    },
+    {
+      "id": 1,
+      "action": "USER_CREATED",
+      "performed_by": 1,
+      "performed_by_name": "Dr. Jitendra Singh (Super Admin)",
+      "target_entity": "USER",
+      "target_id": "14",
+      "details": "Admin Dr. Jitendra Singh (Super Admin) created trainee user Dr. Vikram Sarabhai Fellow (scientist_1788591879417@moes.gov.in).",
+      "ip_address": "127.0.0.1",
+      "metadata": {
+        "role": "trainee",
+        "status": "active",
+        "email": "scientist_1788591879417@moes.gov.in"
+      },
+      "created_at": "2026-09-05T07:04:39.484Z"
+    }
+  ],
+  "announcements": [
+    {
+      "id": 1,
+      "title": "National Ocean Sciences Capacity Development Mission 2026 Launched",
+      "content": "MoES launches the unified Capacity Connect portal for institutional competency development.",
+      "target_audience": "all",
+      "priority": "high",
+      "is_published": true,
+      "created_by": 3,
+      "created_at": "2026-08-31T07:05:39.397Z"
+    },
+    {
+      "id": 2,
+      "title": "Mandatory Digital Certificate Verification Protocol in Effect",
+      "content": "All course completion certificates are now cryptographically hashed using SHA-256 with admin approval sign-off.",
+      "target_audience": "all",
+      "priority": "critical",
+      "is_published": true,
+      "created_by": 3,
+      "created_at": "2026-09-02T07:05:39.397Z"
+    },
+    {
+      "id": 3,
+      "title": "Trainer Assignment & Assessment Scheduling Window Open",
+      "content": "Verified faculty may now configure question banks and review pending trainee submissions.",
+      "target_audience": "trainer",
+      "priority": "medium",
+      "is_published": true,
+      "created_by": 3,
+      "created_at": "2026-09-04T07:05:39.397Z"
+    }
+  ],
+  "learningResources": [
+    {
+      "id": 1,
+      "title": "Advanced React 18 Patterns & Component Lifecycle Architecture",
+      "description": "Comprehensive design system guide for high performance web portals.",
+      "resource_type": "presentation",
+      "course_id": 101,
+      "file_url": "https://cloud-storage.moes.gov.in/resources/react_patterns_2026.pptx",
+      "duration_or_pages": "45 Slides",
+      "tags": [
+        "React",
+        "Architecture"
+      ],
+      "created_by": 2
+    },
+    {
+      "id": 2,
+      "title": "Node.js Microservices Security & Cryptographic Handshake Guide",
+      "description": "Technical whitepaper on HMAC and SHA-256 integrity checks in API pipelines.",
+      "resource_type": "pdf",
+      "course_id": 102,
+      "file_url": "https://cloud-storage.moes.gov.in/resources/nodejs_crypto_guide.pdf",
+      "duration_or_pages": "88 Pages",
+      "tags": [
+        "Backend",
+        "Security"
+      ],
+      "created_by": 2
+    },
+    {
+      "id": 3,
+      "title": "Satellite Altimetry Data Decoding and Radar Calibration Video Lecture",
+      "description": "Detailed classroom session with Dr. Sarah Connor explaining orbital passes.",
+      "resource_type": "video",
+      "course_id": 103,
+      "file_url": "https://cloud-storage.moes.gov.in/videos/altimetry_lecture.mp4",
+      "duration_or_pages": "54 Minutes",
+      "tags": [
+        "Satellite",
+        "Radar"
+      ],
+      "created_by": 7
+    },
+    {
+      "id": 4,
+      "title": "Ocean Current Simulation Modeling Handbook",
+      "description": "Standard operating manual for hydrodynamic grid parameters.",
+      "resource_type": "guide",
+      "course_id": 106,
+      "file_url": "https://cloud-storage.moes.gov.in/resources/hydro_handbook.pdf",
+      "duration_or_pages": "120 Pages",
+      "tags": [
+        "Hydrodynamics",
+        "MoES"
+      ],
+      "created_by": 7
     }
   ]
 }

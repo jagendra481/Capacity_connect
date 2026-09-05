@@ -89,38 +89,83 @@ const demoQuestions = {
 
 class Question {
   static async getByAssessmentId(assessmentId) {
+    const numericId = parseInt(assessmentId);
     if (db.getIsPgConnected()) {
-      const res = await db.query('SELECT * FROM questions WHERE assessment_id = $1 ORDER BY id ASC', [assessmentId]);
+      const res = await db.query('SELECT * FROM questions WHERE assessment_id = $1 ORDER BY id ASC', [numericId]);
       return res.rows;
     }
-    return demoQuestions[parseInt(assessmentId)] || demoQuestions[1];
+    return demoQuestions[numericId] || demoQuestions[1] || [];
   }
 
   static async create(questionData) {
-    const { assessment_id, question_text, type, options, correct_answer, explanation, points } = questionData;
+    const { assessment_id, question_text, type = 'MCQ', options = [], correct_answer, explanation = '', points = 10 } = questionData;
+    const numericAssessmentId = parseInt(assessment_id);
+
     if (db.getIsPgConnected()) {
       const res = await db.query(
-        `INSERT INTO questions (assessment_id, question_text, type, options, correct_answer, explanation, points)
-         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-        [assessment_id, question_text, type, JSON.stringify(options), correct_answer, explanation, points]
+        'INSERT INTO questions (assessment_id, question_text, type, options, correct_answer, explanation, points) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+        [numericAssessmentId, question_text, type, JSON.stringify(options), correct_answer, explanation, points]
       );
       return res.rows[0];
     }
 
-    const list = demoQuestions[parseInt(assessment_id)] || [];
+    if (!demoQuestions[numericAssessmentId]) demoQuestions[numericAssessmentId] = [];
+    const list = demoQuestions[numericAssessmentId];
     const newQ = {
       id: list.length + 101,
-      assessment_id: parseInt(assessment_id),
+      assessment_id: numericAssessmentId,
       question_text,
       type: type || 'MCQ',
-      options: options || [],
+      options: Array.isArray(options) ? options : [],
       correct_answer,
       explanation: explanation || '',
       points: points || 10,
     };
     list.push(newQ);
-    demoQuestions[parseInt(assessment_id)] = list;
     return newQ;
+  }
+
+  static async update(id, updates) {
+    const numericId = parseInt(id);
+    if (db.getIsPgConnected()) {
+      const fields = [];
+      const values = [];
+      let idx = 1;
+      for (const [k, v] of Object.entries(updates)) {
+        fields.push(k + ' = $' + idx);
+        values.push(k === 'options' ? JSON.stringify(v) : v);
+        idx++;
+      }
+      values.push(numericId);
+      const res = await db.query('UPDATE questions SET ' + fields.join(', ') + ' WHERE id = $' + idx + ' RETURNING *', values);
+      return res.rows[0];
+    }
+
+    for (const list of Object.values(demoQuestions)) {
+      const q = list.find(item => item.id === numericId);
+      if (q) {
+        Object.assign(q, updates);
+        return q;
+      }
+    }
+    return null;
+  }
+
+  static async delete(id) {
+    const numericId = parseInt(id);
+    if (db.getIsPgConnected()) {
+      await db.query('DELETE FROM questions WHERE id = $1', [numericId]);
+      return true;
+    }
+
+    for (const [key, list] of Object.entries(demoQuestions)) {
+      const idx = list.findIndex(item => item.id === numericId);
+      if (idx !== -1) {
+        list.splice(idx, 1);
+        return true;
+      }
+    }
+    return false;
   }
 }
 

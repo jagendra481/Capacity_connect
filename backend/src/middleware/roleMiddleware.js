@@ -8,6 +8,11 @@ const requireRole = (allowedRoles = []) => {
 
     const rolesList = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
 
+    // Super Admin has root access to all administrator endpoints
+    if (req.user.role === 'super_admin') {
+      return next();
+    }
+
     if (!rolesList.includes(req.user.role)) {
       return response.error(
         res,
