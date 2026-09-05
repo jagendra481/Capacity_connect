@@ -32,7 +32,7 @@
       "email_verified": true,
       "status": "active",
       "created_at": "2026-09-05T06:33:04.878Z",
-      "last_login": "2026-09-05T06:33:05.120Z"
+      "last_login": "2026-09-05T06:48:34.499Z"
     },
     {
       "id": 4,
@@ -48,7 +48,7 @@
       "status": "active",
       "google_id": "sub_google_123456789",
       "created_at": "2026-09-05T06:33:04.882Z",
-      "last_login": "2026-09-05T06:33:04.889Z"
+      "last_login": "2026-09-05T06:47:45.921Z"
     },
     {
       "id": 5,
@@ -64,7 +64,67 @@
       "status": "active",
       "google_id": "sub_legacy_55555",
       "created_at": "2026-09-05T06:33:04.974Z",
-      "last_login": "2026-09-05T06:33:04.978Z"
+      "last_login": "2026-09-05T06:47:46.009Z"
+    },
+    {
+      "id": 6,
+      "email": "capacityadmin@gmail.com",
+      "password_hash": "$2a$10$9qci.inlsWiSsB8SoUnvl.iuiJLTcNRPkiqQm8DJlZHDAAfYUiGh6",
+      "role": "administrator",
+      "department_id": 4,
+      "full_name": "Capacity Administrator",
+      "email_verified": true,
+      "status": "active",
+      "created_at": "2026-09-05T06:46:29.198Z",
+      "last_login": "2026-09-05T06:47:05.394Z"
+    },
+    {
+      "id": 7,
+      "email": "legacy_trainer@capacityconnect.com",
+      "password_hash": "hashed",
+      "role": "trainer",
+      "department_id": 1,
+      "full_name": "Legacy Trainer",
+      "designation": "TRAINER",
+      "employee_student_id": null,
+      "email_verified": true,
+      "profile_image": "https://api.dicebear.com/7.x/avataaars/svg?seed=Legacy%20Trainer",
+      "status": "active",
+      "google_id": null,
+      "created_at": "2026-09-05T06:47:45.999Z",
+      "last_login": "2026-09-05T06:47:45.999Z"
+    },
+    {
+      "id": 8,
+      "email": "googlesignup_1788590914295@gmail.com",
+      "password_hash": "GOOGLE_OAUTH_ACCOUNT",
+      "role": "trainee",
+      "department_id": 1,
+      "full_name": "Google Learner",
+      "designation": "TRAINEE",
+      "employee_student_id": null,
+      "email_verified": true,
+      "profile_image": "https://api.dicebear.com/7.x/avataaars/svg?seed=Google%20Learner",
+      "status": "active",
+      "google_id": "sub_google_1788590914290",
+      "created_at": "2026-09-05T06:48:34.295Z",
+      "last_login": "2026-09-05T06:48:34.299Z"
+    },
+    {
+      "id": 9,
+      "email": "legacy_trainer_1788590914371@capacityconnect.com",
+      "password_hash": "hashed",
+      "role": "trainer",
+      "department_id": 1,
+      "full_name": "Legacy Trainer",
+      "designation": "TRAINER",
+      "employee_student_id": null,
+      "email_verified": true,
+      "profile_image": "https://api.dicebear.com/7.x/avataaars/svg?seed=Legacy%20Trainer",
+      "status": "active",
+      "google_id": "sub_legacy_1788590914371",
+      "created_at": "2026-09-05T06:48:34.371Z",
+      "last_login": "2026-09-05T06:48:34.373Z"
     }
   ],
   "userProfiles": [
@@ -106,6 +166,42 @@
     },
     {
       "user_id": 5,
+      "designation": "TRAINER",
+      "bio": "New trainer member",
+      "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=Legacy%20Trainer",
+      "xp": 0,
+      "streak_days": 0,
+      "competency_score": 0
+    },
+    {
+      "user_id": 6,
+      "designation": "Chief Platform Administrator",
+      "bio": "System Administrator for Capacity Connect.",
+      "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=capacityadmin",
+      "xp": 0,
+      "streak_days": 0,
+      "competency_score": 0
+    },
+    {
+      "user_id": 7,
+      "designation": "TRAINER",
+      "bio": "New trainer member",
+      "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=Legacy%20Trainer",
+      "xp": 0,
+      "streak_days": 0,
+      "competency_score": 0
+    },
+    {
+      "user_id": 8,
+      "designation": "TRAINEE",
+      "bio": "New trainee member",
+      "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=Google%20Learner",
+      "xp": 0,
+      "streak_days": 0,
+      "competency_score": 0
+    },
+    {
+      "user_id": 9,
       "designation": "TRAINER",
       "bio": "New trainer member",
       "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=Legacy%20Trainer",

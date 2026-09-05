@@ -97,6 +97,7 @@ const initializeMemoryStore = async () => {
 
   const salt = await bcrypt.genSalt(10);
   const passwordHash = await bcrypt.hash('Password123!', salt);
+  const adminPasswordHash = await bcrypt.hash('admin123', salt);
 
   memoryStore.users = [
     {
@@ -131,6 +132,17 @@ const initializeMemoryStore = async () => {
       email_verified: true,
       status: 'active',
       created_at: new Date().toISOString()
+    },
+    {
+      id: 4,
+      email: 'capacityadmin@gmail.com',
+      password_hash: adminPasswordHash,
+      role: 'administrator',
+      department_id: 4,
+      full_name: 'Capacity Administrator',
+      email_verified: true,
+      status: 'active',
+      created_at: new Date().toISOString()
     }
   ];
 
@@ -158,6 +170,15 @@ const initializeMemoryStore = async () => {
       designation: 'Chief Capacity Officer',
       bio: 'Overseeing organizational skill development and strategic capacity growth.',
       avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=250',
+      xp: 0,
+      streak_days: 0,
+      competency_score: 0
+    },
+    {
+      user_id: 4,
+      designation: 'Chief Platform Administrator',
+      bio: 'System Administrator for Capacity Connect.',
+      avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=capacityadmin',
       xp: 0,
       streak_days: 0,
       competency_score: 0

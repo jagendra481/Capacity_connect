@@ -48,8 +48,8 @@ async function runTests() {
 
   // --- TEST 2: Google Signup -> Google Login Flow (Problem 1) ---
   console.log('\n--- Test 2: Google Signup -> Google Login Flow ---');
-  const testGoogleId = 'sub_google_123456789';
-  const testGoogleEmail = 'googlesignup_user@gmail.com';
+  const testGoogleId = `sub_google_${Date.now()}`;
+  const testGoogleEmail = `googlesignup_${Date.now()}@gmail.com`;
 
   try {
     const signupRes = await authService.googleAuth({
@@ -83,8 +83,8 @@ async function runTests() {
   console.log('\n--- Test 3: Google Login with Unknown Account ---');
   try {
     await authService.googleAuth({
-      email: 'unknown_account@gmail.com',
-      sub: 'sub_unknown_99999',
+      email: `unknown_account_${Date.now()}@gmail.com`,
+      sub: `sub_unknown_${Date.now()}`,
       mode: 'login',
       selectedRole: 'trainee',
     });
@@ -141,8 +141,8 @@ async function runTests() {
 
   // --- TEST 6: Existing Email User Google Linking ---
   console.log('\n--- Test 6: Existing Email/Password User Google Linking ---');
-  const legacyEmail = 'legacy_trainer@capacityconnect.com';
-  const legacyGoogleSub = 'sub_legacy_55555';
+  const legacyEmail = `legacy_trainer_${Date.now()}@capacityconnect.com`;
+  const legacyGoogleSub = `sub_legacy_${Date.now()}`;
 
   try {
     // 1. Create email/password trainer user directly
