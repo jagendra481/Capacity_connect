@@ -1,0 +1,117 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "email": "trainee@capacityconnect.com",
+      "password_hash": "$2a$10$wYhd.nc/KCXM4wUQMwFZeOT5ikA0pNKYkuaK9eeZ6s9Y1noqUI5GG",
+      "role": "trainee",
+      "department_id": 1,
+      "full_name": "Alex Johnson",
+      "email_verified": true,
+      "status": "active",
+      "created_at": "2026-09-05T06:33:04.877Z"
+    },
+    {
+      "id": 2,
+      "email": "trainer@capacityconnect.com",
+      "password_hash": "$2a$10$wYhd.nc/KCXM4wUQMwFZeOT5ikA0pNKYkuaK9eeZ6s9Y1noqUI5GG",
+      "role": "trainer",
+      "department_id": 1,
+      "full_name": "Dr. Sarah Connor",
+      "email_verified": true,
+      "status": "active",
+      "created_at": "2026-09-05T06:33:04.878Z"
+    },
+    {
+      "id": 3,
+      "email": "admin@capacityconnect.com",
+      "password_hash": "$2a$10$wYhd.nc/KCXM4wUQMwFZeOT5ikA0pNKYkuaK9eeZ6s9Y1noqUI5GG",
+      "role": "administrator",
+      "department_id": 4,
+      "full_name": "Marcus Vance",
+      "email_verified": true,
+      "status": "active",
+      "created_at": "2026-09-05T06:33:04.878Z",
+      "last_login": "2026-09-05T06:33:05.120Z"
+    },
+    {
+      "id": 4,
+      "email": "googlesignup_user@gmail.com",
+      "password_hash": "GOOGLE_OAUTH_ACCOUNT",
+      "role": "trainee",
+      "department_id": 1,
+      "full_name": "Google Learner",
+      "designation": "TRAINEE",
+      "employee_student_id": null,
+      "email_verified": true,
+      "profile_image": "https://api.dicebear.com/7.x/avataaars/svg?seed=Google%20Learner",
+      "status": "active",
+      "google_id": "sub_google_123456789",
+      "created_at": "2026-09-05T06:33:04.882Z",
+      "last_login": "2026-09-05T06:33:04.889Z"
+    },
+    {
+      "id": 5,
+      "email": "legacy_trainer@capacityconnect.com",
+      "password_hash": "hashed",
+      "role": "trainer",
+      "department_id": 1,
+      "full_name": "Legacy Trainer",
+      "designation": "TRAINER",
+      "employee_student_id": null,
+      "email_verified": true,
+      "profile_image": "https://api.dicebear.com/7.x/avataaars/svg?seed=Legacy%20Trainer",
+      "status": "active",
+      "google_id": "sub_legacy_55555",
+      "created_at": "2026-09-05T06:33:04.974Z",
+      "last_login": "2026-09-05T06:33:04.978Z"
+    }
+  ],
+  "userProfiles": [
+    {
+      "user_id": 1,
+      "designation": "Junior Full-Stack Engineer",
+      "bio": "Enthusiastic developer focusing on modern web apps and cloud architecture.",
+      "avatar_url": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250",
+      "xp": 0,
+      "streak_days": 0,
+      "competency_score": 0
+    },
+    {
+      "user_id": 2,
+      "designation": "Principal Technical Trainer",
+      "bio": "Over 10 years of enterprise training experience in distributed systems.",
+      "avatar_url": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=250",
+      "xp": 0,
+      "streak_days": 0,
+      "competency_score": 0
+    },
+    {
+      "user_id": 3,
+      "designation": "Chief Capacity Officer",
+      "bio": "Overseeing organizational skill development and strategic capacity growth.",
+      "avatar_url": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=250",
+      "xp": 0,
+      "streak_days": 0,
+      "competency_score": 0
+    },
+    {
+      "user_id": 4,
+      "designation": "TRAINEE",
+      "bio": "New trainee member",
+      "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=Google%20Learner",
+      "xp": 0,
+      "streak_days": 0,
+      "competency_score": 0
+    },
+    {
+      "user_id": 5,
+      "designation": "TRAINER",
+      "bio": "New trainer member",
+      "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=Legacy%20Trainer",
+      "xp": 0,
+      "streak_days": 0,
+      "competency_score": 0
+    }
+  ]
+}

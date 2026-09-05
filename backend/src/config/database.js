@@ -52,8 +52,49 @@ const memoryStore = {
   aiMessages: []
 };
 
+const fs = require('fs');
+const path = require('path');
+const storeFilePath = path.join(__dirname, 'memory_backup.json');
+
+const saveMemoryStore = () => {
+  try {
+    const dataToSave = {
+      users: memoryStore.users,
+      userProfiles: memoryStore.userProfiles,
+    };
+    fs.writeFileSync(storeFilePath, JSON.stringify(dataToSave, null, 2), 'utf-8');
+  } catch (err) {
+    logger.warn(`Failed to persist memoryStore: ${err.message}`);
+  }
+};
+
+const loadMemoryStoreFromFile = () => {
+  try {
+    if (fs.existsSync(storeFilePath)) {
+      const content = fs.readFileSync(storeFilePath, 'utf-8');
+      const parsed = JSON.parse(content);
+      if (Array.isArray(parsed.users) && parsed.users.length > 0) {
+        memoryStore.users = parsed.users;
+      }
+      if (Array.isArray(parsed.userProfiles) && parsed.userProfiles.length > 0) {
+        memoryStore.userProfiles = parsed.userProfiles;
+      }
+      return true;
+    }
+  } catch (err) {
+    logger.warn(`Failed to read memoryStore backup: ${err.message}`);
+  }
+  return false;
+};
+
 // Seed initial memory store demo data
 const initializeMemoryStore = async () => {
+  const loaded = loadMemoryStoreFromFile();
+  if (loaded && memoryStore.users.length > 0) {
+    logger.info(`[MEMORY STORE] Loaded ${memoryStore.users.length} persisted users from disk.`);
+    return;
+  }
+
   const salt = await bcrypt.genSalt(10);
   const passwordHash = await bcrypt.hash('Password123!', salt);
 
@@ -122,6 +163,8 @@ const initializeMemoryStore = async () => {
       competency_score: 0
     }
   ];
+
+  saveMemoryStore();
   memoryStore.courses = [
     {
       id: 1,
@@ -312,4 +355,5 @@ module.exports = {
   query,
   getIsPgConnected: () => isPgConnected,
   memoryStore,
+  saveMemoryStore,
 };

@@ -119,6 +119,8 @@ class User {
       competency_score: 0
     });
 
+    if (db.saveMemoryStore) db.saveMemoryStore();
+
     const { password_hash: ph, ...userClean } = newUser;
     return userClean;
   }
@@ -133,7 +135,10 @@ class User {
       return res.rows[0];
     }
     const u = db.memoryStore.users.find(u => u.id === numericId);
-    if (u) u.email_verified = isVerified;
+    if (u) {
+      u.email_verified = isVerified;
+      if (db.saveMemoryStore) db.saveMemoryStore();
+    }
     return u;
   }
 
@@ -150,6 +155,7 @@ class User {
     if (u) {
       u.google_id = googleId;
       u.email_verified = true;
+      if (db.saveMemoryStore) db.saveMemoryStore();
     }
     return u;
   }
@@ -160,7 +166,10 @@ class User {
       await db.query('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1', [numericId]);
     } else {
       const u = db.memoryStore.users.find(u => u.id === numericId);
-      if (u) u.last_login = new Date().toISOString();
+      if (u) {
+        u.last_login = new Date().toISOString();
+        if (db.saveMemoryStore) db.saveMemoryStore();
+      }
     }
   }
 
@@ -174,7 +183,10 @@ class User {
       return res.rows[0];
     }
     const u = db.memoryStore.users.find(u => u.id === numericId);
-    if (u) u.password_hash = passwordHash;
+    if (u) {
+      u.password_hash = passwordHash;
+      if (db.saveMemoryStore) db.saveMemoryStore();
+    }
     return u;
   }
 
@@ -195,7 +207,10 @@ class User {
       return res.rows[0];
     }
     const u = db.memoryStore.users.find(u => u.id === numericId);
-    if (u) u.role = newRole;
+    if (u) {
+      u.role = newRole;
+      if (db.saveMemoryStore) db.saveMemoryStore();
+    }
     return u;
   }
 }

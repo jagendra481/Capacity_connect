@@ -48,8 +48,8 @@ export const Signup = () => {
   const { signup, signupWithGoogle } = useAuth();
   const navigate = useNavigate();
 
-  // Mandatory Selected Role: 'trainee' | 'trainer' | 'administrator' | null
-  const [selectedRole, setSelectedRole] = useState(null);
+  // Selected Role: 'trainee' | 'trainer' | 'administrator'
+  const [selectedRole, setSelectedRole] = useState('trainee');
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -319,17 +319,15 @@ export const Signup = () => {
 
           <button
             type="submit"
-            disabled={loading || !selectedRole || selectedRole === 'administrator'}
+            disabled={loading || selectedRole === 'administrator'}
             className="w-full py-3 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-bold rounded-xl transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center space-x-2 mt-4"
           >
             <span>
-              {!selectedRole
-                ? 'Select a Role to Sign Up'
-                : selectedRole === 'administrator'
+              {selectedRole === 'administrator'
                 ? 'Admin Requires Authorization'
                 : loading
                 ? 'Sending verification code...'
-                : `Create ${activeRoleConfig?.label} Account`}
+                : `Create ${activeRoleConfig?.label || 'Trainee'} Account`}
             </span>
             {!loading && <ArrowRight className="w-4 h-4" />}
           </button>
