@@ -111,6 +111,72 @@ class User {
     return userWithoutPassword;
   }
 
+  static async setEmailVerified(userId, isVerified = true) {
+    const numericId = parseInt(userId);
+    if (db.getIsPgConnected()) {
+      const res = await db.query(
+        'UPDATE users SET email_verified = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *',
+        [isVerified, numericId]
+      );
+      return res.rows[0];
+    }
+    const u = db.memoryStore.users.find(u => u.id === numericId);
+    if (u) {
+      u.email_verified = isVerified;
+      if (db.saveMemoryStore) db.saveMemoryStore();
+    }
+    return u;
+  }
+
+  static async linkGoogleAccount(userId, googleId) {
+    const numericId = parseInt(userId);
+    if (db.getIsPgConnected()) {
+      const res = await db.query(
+        'UPDATE users SET google_id = $1, email_verified = TRUE, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *',
+        [googleId, numericId]
+      );
+      return res.rows[0];
+    }
+    const u = db.memoryStore.users.find(u => u.id === numericId);
+    if (u) {
+      u.google_id = googleId;
+      u.email_verified = true;
+      if (db.saveMemoryStore) db.saveMemoryStore();
+    }
+    return u;
+  }
+
+  static async updateLastLogin(userId) {
+    const numericId = parseInt(userId);
+    if (db.getIsPgConnected()) {
+      await db.query('UPDATE users SET last_login_at = CURRENT_TIMESTAMP WHERE id = $1', [numericId]);
+    } else {
+      const u = db.memoryStore.users.find(u => u.id === numericId);
+      if (u) {
+        u.last_login_at = new Date().toISOString();
+        u.last_login = new Date().toISOString();
+        if (db.saveMemoryStore) db.saveMemoryStore();
+      }
+    }
+  }
+
+  static async updatePassword(userId, passwordHash) {
+    const numericId = parseInt(userId);
+    if (db.getIsPgConnected()) {
+      const res = await db.query(
+        'UPDATE users SET password_hash = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *',
+        [passwordHash, numericId]
+      );
+      return res.rows[0];
+    }
+    const u = db.memoryStore.users.find(u => u.id === numericId);
+    if (u) {
+      u.password_hash = passwordHash;
+      if (db.saveMemoryStore) db.saveMemoryStore();
+    }
+    return u;
+  }
+
   static async createByAdmin({
     email,
     password_hash,

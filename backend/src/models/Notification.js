@@ -91,6 +91,7 @@ class Notification {
   }
 
   static async createAnnouncement({ title, message, type = 'Announcement', link = '' }) {
+    if (db.getIsPgConnected()) {
       const res = await db.query(
         `INSERT INTO notifications (user_id, title, message, type, link)
          VALUES (0, $1, $2, $3, $4) RETURNING *`,
@@ -112,6 +113,7 @@ class Notification {
     demoNotifications.unshift(newAnnouncement);
     return newAnnouncement;
   }
+
 
   static async getPublicAnnouncements() {
     if (db.getIsPgConnected()) {
