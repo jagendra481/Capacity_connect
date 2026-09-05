@@ -19,23 +19,53 @@ export const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+  // Check if account is suspended
+  if (user.status === 'suspended') {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 p-6 text-center">
         <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-8 max-w-md">
-          <h2 className="text-xl font-bold text-red-400 mb-2">Access Denied</h2>
+          <h2 className="text-xl font-bold text-red-400 mb-2">Account Suspended</h2>
           <p className="text-sm text-slate-300 mb-6">
-            You do not have permission to access this page. Required role: {allowedRoles.join(', ')}
+            Your account has been deactivated or suspended by the platform administrator. Please contact system support.
           </p>
           <button
-            onClick={() => window.history.back()}
-            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium rounded-lg transition-colors"
+            onClick={() => {
+              localStorage.removeItem('token');
+              window.location.href = '/login';
+            }}
+            className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-sm font-medium rounded-lg transition-colors"
           >
-            Go Back
+            Sign Out
           </button>
         </div>
       </div>
     );
+  }
+
+  if (allowedRoles.length > 0) {
+    const isSuperAdmin = user.role === 'super_admin';
+    const hasRole =
+      allowedRoles.includes(user.role) ||
+      (isSuperAdmin && (allowedRoles.includes('administrator') || allowedRoles.includes('trainer') || allowedRoles.includes('trainee')));
+
+    if (!hasRole) {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 p-6 text-center">
+          <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-8 max-w-md">
+            <h2 className="text-xl font-bold text-red-400 mb-2">Access Denied</h2>
+            <p className="text-sm text-slate-300 mb-6">
+              You do not have permission to access this page. Required role: {allowedRoles.join(', ')}
+            </p>
+            <button
+              onClick={() => window.history.back()}
+              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium rounded-lg transition-colors"
+            >
+              Go Back
+            </button>
+          </div>
+        </div>
+      );
+    }
   }
 
   return children;

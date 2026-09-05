@@ -80,9 +80,16 @@ import NotificationSettings from '../pages/notifications/NotificationSettings';
 
 // Admin Pages
 import AdminDashboard from '../pages/admin/AdminDashboard';
-import UserManagementPage from '../pages/admin/UserManagement';
+import UserManagement from '../pages/admin/UserManagement';
+import CourseManagement from '../pages/admin/CourseManagement';
+import AssessmentManagement from '../pages/admin/AssessmentManagement';
+import ResourceManagement from '../pages/admin/ResourceManagement';
+import CompetencyManagement from '../pages/admin/CompetencyManagement';
+import ContentManagement from '../pages/admin/ContentManagement';
+import AdminActivityLogs from '../pages/admin/AdminActivityLogs';
 import DepartmentManagementPage from '../pages/admin/DepartmentManagement';
 import AnalyticsPage from '../pages/admin/Analytics';
+import Reports from '../pages/admin/Reports';
 import CertificateManagement from '../pages/admin/CertificateManagement';
 
 // Shell Layout Wrapper
@@ -474,7 +481,7 @@ export const AppRoutes = () => {
       <Route
         path="/admin/dashboard"
         element={
-          <ProtectedRoute allowedRoles={['administrator']}>
+          <ProtectedRoute allowedRoles={['administrator', 'super_admin']}>
             <AppLayout>
               <AdminDashboard />
             </AppLayout>
@@ -484,9 +491,69 @@ export const AppRoutes = () => {
       <Route
         path="/admin/users"
         element={
-          <ProtectedRoute allowedRoles={['administrator']}>
+          <ProtectedRoute allowedRoles={['administrator', 'super_admin']}>
             <AppLayout>
-              <UserManagementPage />
+              <UserManagement />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/courses"
+        element={
+          <ProtectedRoute allowedRoles={['administrator', 'super_admin']}>
+            <AppLayout>
+              <CourseManagement />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/assessments"
+        element={
+          <ProtectedRoute allowedRoles={['administrator', 'super_admin']}>
+            <AppLayout>
+              <AssessmentManagement />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/resources"
+        element={
+          <ProtectedRoute allowedRoles={['administrator', 'super_admin']}>
+            <AppLayout>
+              <ResourceManagement />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/competencies"
+        element={
+          <ProtectedRoute allowedRoles={['administrator', 'super_admin']}>
+            <AppLayout>
+              <CompetencyManagement />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/content"
+        element={
+          <ProtectedRoute allowedRoles={['administrator', 'super_admin']}>
+            <AppLayout>
+              <ContentManagement />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/activity-logs"
+        element={
+          <ProtectedRoute allowedRoles={['administrator', 'super_admin']}>
+            <AppLayout>
+              <AdminActivityLogs />
             </AppLayout>
           </ProtectedRoute>
         }
@@ -494,7 +561,7 @@ export const AppRoutes = () => {
       <Route
         path="/admin/departments"
         element={
-          <ProtectedRoute allowedRoles={['administrator']}>
+          <ProtectedRoute allowedRoles={['administrator', 'super_admin']}>
             <AppLayout>
               <DepartmentManagementPage />
             </AppLayout>
@@ -504,7 +571,7 @@ export const AppRoutes = () => {
       <Route
         path="/admin/analytics"
         element={
-          <ProtectedRoute allowedRoles={['administrator']}>
+          <ProtectedRoute allowedRoles={['administrator', 'super_admin']}>
             <AppLayout>
               <AnalyticsPage />
             </AppLayout>
@@ -512,9 +579,19 @@ export const AppRoutes = () => {
         }
       />
       <Route
+        path="/admin/reports"
+        element={
+          <ProtectedRoute allowedRoles={['administrator', 'super_admin']}>
+            <AppLayout>
+              <Reports />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/admin/capacity-radar"
         element={
-          <ProtectedRoute allowedRoles={['administrator']}>
+          <ProtectedRoute allowedRoles={['administrator', 'super_admin']}>
             <AppLayout>
               <CapacityRadarPage />
             </AppLayout>
@@ -524,7 +601,7 @@ export const AppRoutes = () => {
       <Route
         path="/admin/certificates"
         element={
-          <ProtectedRoute allowedRoles={['administrator']}>
+          <ProtectedRoute allowedRoles={['administrator', 'super_admin']}>
             <AppLayout>
               <CertificateManagement />
             </AppLayout>
