@@ -32,8 +32,8 @@
       "email_verified": true,
       "status": "active",
       "created_at": "2026-09-05T06:33:04.878Z",
-      "last_login": "2026-09-05T07:26:14.086Z",
-      "last_login_at": "2026-09-05T07:26:14.086Z"
+      "last_login": "2026-09-05T07:33:59.820Z",
+      "last_login_at": "2026-09-05T07:33:59.820Z"
     },
     {
       "id": 4,
@@ -314,6 +314,40 @@
       "created_at": "2026-09-05T07:26:13.960Z",
       "last_login_at": "2026-09-05T07:26:13.963Z",
       "last_login": "2026-09-05T07:26:13.963Z"
+    },
+    {
+      "id": 22,
+      "email": "googlesignup_1788593639614@gmail.com",
+      "password_hash": "GOOGLE_OAUTH_ACCOUNT",
+      "role": "trainee",
+      "department_id": 1,
+      "full_name": "Google Learner",
+      "designation": null,
+      "employee_student_id": null,
+      "email_verified": true,
+      "profile_image": "https://api.dicebear.com/7.x/avataaars/svg?seed=Google%20Learner",
+      "status": "active",
+      "google_id": "sub_google_1788593639614",
+      "created_at": "2026-09-05T07:33:59.614Z",
+      "last_login_at": "2026-09-05T07:33:59.618Z",
+      "last_login": "2026-09-05T07:33:59.618Z"
+    },
+    {
+      "id": 23,
+      "email": "legacy_trainer_1788593639682@capacityconnect.com",
+      "password_hash": "hashed",
+      "role": "trainer",
+      "department_id": 1,
+      "full_name": "Legacy Trainer",
+      "designation": null,
+      "employee_student_id": null,
+      "email_verified": true,
+      "profile_image": "https://api.dicebear.com/7.x/avataaars/svg?seed=Legacy%20Trainer",
+      "status": "active",
+      "google_id": "sub_legacy_1788593639682",
+      "created_at": "2026-09-05T07:33:59.682Z",
+      "last_login_at": "2026-09-05T07:33:59.692Z",
+      "last_login": "2026-09-05T07:33:59.692Z"
     }
   ],
   "userProfiles": [
@@ -535,6 +569,24 @@
     },
     {
       "user_id": 21,
+      "designation": "TRAINER",
+      "bio": "New trainer member",
+      "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=Legacy%20Trainer",
+      "xp": 0,
+      "streak_days": 0,
+      "competency_score": 0
+    },
+    {
+      "user_id": 22,
+      "designation": "TRAINEE",
+      "bio": "New trainee member",
+      "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=Google%20Learner",
+      "xp": 0,
+      "streak_days": 0,
+      "competency_score": 0
+    },
+    {
+      "user_id": 23,
       "designation": "TRAINER",
       "bio": "New trainer member",
       "avatar_url": "https://api.dicebear.com/7.x/avataaars/svg?seed=Legacy%20Trainer",

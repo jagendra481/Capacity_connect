@@ -7,6 +7,16 @@ const { generateToken } = require('../utils/jwt');
 const env = require('../config/env');
 const logger = require('../utils/logger');
 
+const safeUpdateLastLogin = async (userId) => {
+  try {
+    if (User && typeof User.updateLastLogin === 'function') {
+      await User.updateLastLogin(userId);
+    }
+  } catch (err) {
+    logger.warn(`[AUTH] Non-fatal last login update warning for user ${userId}: ${err.message}`);
+  }
+};
+
 class AuthService {
   async signup(data) {
     return this.register(data);
@@ -145,7 +155,7 @@ class AuthService {
 
     // Mark email as verified
     user = await User.setEmailVerified(user.id, true);
-    await User.updateLastLogin(user.id);
+    await safeUpdateLastLogin(user.id);
 
     const token = generateToken({
       id: user.id,
@@ -313,7 +323,7 @@ class AuthService {
       throw err;
     }
 
-    await User.updateLastLogin(user.id);
+    await safeUpdateLastLogin(user.id);
 
     const token = generateToken({
       id: user.id,
@@ -412,7 +422,7 @@ class AuthService {
       user = await User.setEmailVerified(user.id, true);
     }
 
-    await User.updateLastLogin(user.id);
+    await safeUpdateLastLogin(user.id);
 
     const token = generateToken({
       id: user.id,
@@ -547,7 +557,7 @@ class AuthService {
       });
     }
 
-    await User.updateLastLogin(user.id);
+    await safeUpdateLastLogin(user.id);
 
     const token = generateToken({
       id: user.id,
